@@ -1,0 +1,68 @@
+﻿<Page
+    x:Class="PublicStatusIndicator.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PublicStatusIndicator"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Width="800" Height="480">
+
+    <Page.Resources>
+        <Style x:Name="style_Button" TargetType="Button">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="Margin" Value="20"/>
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+    </Page.Resources>
+    
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="480" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Canvas Grid.Column="0">
+            <Canvas.RenderTransform>
+                <TranslateTransform X="0" Y="-572.36213"/>
+            </Canvas.RenderTransform>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED1" Fill="{Binding LEDring.Color1, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="m 439.75143 812.36129 a 200 200 0 0 0 -26.54635 -99.99917 l -69.28203 40 a 120 120 0 0 1 15.97007 60.00082 l 79.85831 -0.002 z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED2" Fill="{Binding LEDring.Color2, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="M 412.9894 712.48569 A 200 200 0 0 0 340 639.15704 l -40 69.28204 a 120 120 0 0 1 43.8309 43.9772 l 69.1585 -39.93059 z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED3" Fill="{Binding LEDring.Color3, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="M 339.875 639.3719 A 200 200 0 0 0 240 612.36213 l 0 80 a 120 120 0 0 1 59.94727 16.16992 L 339.875 639.3719 Z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED4" Fill="{Binding LEDring.Color4, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="M 239.99917 612.6107 A 200 200 0 0 0 140 639.15705 l 40 69.28203 a 120 120 0 0 1 60.00082 -15.97007 l -0.002 -79.85831 z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED5" Fill="{Binding LEDring.Color5, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="m 140.12356 639.37273 a 200 200 0 0 0 -73.328642 72.9894 l 69.282032 40 a 120 120 0 0 1 43.9772 -43.8309 l -39.93059 -69.1585 z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED6" Fill="{Binding LEDring.Color6, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="M 67.009766 712.48713 A 200 200 0 0 0 40 812.36213 l 80 0 a 120 120 0 0 1 16.16992 -59.94727 L 67.009766 712.48713 Z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED7" Fill="{Binding LEDring.Color7, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="M 67.00977 912.23713 A 200 200 0 0 1 40 812.36213 l 80 0 a 120 120 0 0 0 16.16992 59.94727 l -69.16015 39.92773 z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED8" Fill="{Binding LEDring.Color8, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="m 140.12356 985.35153 a 200 200 0 0 1 -73.32864 -72.9894 l 69.28203 -40 a 120 120 0 0 0 43.9772 43.8309 l -39.93059 69.1585 z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED9" Fill="{Binding LEDring.Color9, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="M 239.99917 1012.1136 A 200 200 0 0 1 140 985.56721 l 40 -69.28203 a 120 120 0 0 0 60.00082 15.97007 l -0.002 79.85835 z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED10" Fill="{Binding LEDring.Color10, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="M 339.875 985.35236 A 200 200 0 0 1 240 1012.3621 l 0 -79.99997 a 120 120 0 0 0 59.94727 -16.16992 l 39.92773 69.16015 z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED11" Fill="{Binding LEDring.Color11, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="M 412.9894 912.23857 A 200 200 0 0 1 340 985.56722 l -40 -69.28204 a 120 120 0 0 0 43.8309 -43.9772 l 69.1585 39.93059 z"/>
+            <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="LED12" Fill="{Binding LEDring.Color12, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1" Data="m 439.75143 812.36297 a 200 200 0 0 1 -26.54635 99.99917 l -69.28203 -40 a 120 120 0 0 0 15.97007 -60.00082 l 79.85831 0.002 z"/>
+            <Ellipse xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Canvas.Left="160" Canvas.Top="732.4" Width="160" Height="160" Name="LEDMid" Fill="{Binding CenterColor, FallbackValue='#FF808080'}" StrokeThickness="1" Stroke="#FF000000" StrokeMiterLimit="4" StrokeLineJoin="Round" Opacity="1"/>
+        </Canvas>
+        <TextBlock Name="Status" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" FontWeight="Bold" Text="{Binding Path=StatusOutput, FallbackValue='Status'}"/>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Button Grid.Row="0" Name="Blank" Content="Set to Blank" 
+                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+            <Button Grid.Row="1" Name="InProgress" Content="Set to in Progress" 
+                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+            <Button Grid.Row="2" Name="StateGood" Content="Set to state GOOD" 
+                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+            <Button Grid.Row="3" Name="StateBad" Content="Set to state BAD" 
+                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+            <Button Grid.Row="4" Name="showProfiles" Content="show Profiles" 
+                    Style="{StaticResource style_Button}" FontWeight="Normal" Click="Button_Action"/>
+        </Grid>
+    </Grid>
+</Page>

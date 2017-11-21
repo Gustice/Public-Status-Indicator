@@ -15,8 +15,8 @@ namespace PublicStatusIndicator.IndicatorEngine
         private int _fadingCnt;
         private EngineState _fadingState;
         private EngineState _lastState = EngineState.Idle;
-        
         private readonly PulseEffect _virBadEffect;
+
         private readonly PulseEffect _virGoodEffect;
         private readonly RotateEffect _virPrcsEffect;
 
@@ -131,6 +131,8 @@ namespace PublicStatusIndicator.IndicatorEngine
                 _fadingCnt = FadingStart;
                 ResetEffekt(currentState);
             }
+            
+
 
             var ringColors1 = GenerateNewImage(currentState);
 
@@ -201,6 +203,7 @@ namespace PublicStatusIndicator.IndicatorEngine
         Idle,
         Progress,
         Good,
-        Bad
+        Bad,
+        Blank
     }
 }

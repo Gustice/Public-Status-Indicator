@@ -34,7 +34,7 @@ namespace PublicStatusIndicator.IndicatorEngine
         public Engine()
         {
             _virtualIndicator = new StatusIndicator(12, 4);
-            _ledIndicator = new StatusIndicator(20, 2);
+            _ledIndicator = new StatusIndicator(20, 8);
             _virtualRing = new Color[VIRTUAL_LEN];
             _rgBring = new Color[LEDSTRIP_LEN];
 
@@ -43,7 +43,7 @@ namespace PublicStatusIndicator.IndicatorEngine
             InitHardware();
 
             RefreshTimer = new DispatcherTimer();
-            RefreshTimer.Interval = TimeSpan.FromMilliseconds(100);
+            RefreshTimer.Interval = TimeSpan.FromMilliseconds(50);
             RefreshTimer.Tick += LED_Refresh_Tick;
         }
 
@@ -52,6 +52,14 @@ namespace PublicStatusIndicator.IndicatorEngine
         public ObersableBrushes LEDRing { get; }
 
         public DispatcherTimer RefreshTimer { get; set; }
+
+
+        public async void BlankLeds()
+        {
+            _leDstrip.BlankLEDs();
+
+        }
+
 
         private async void InitHardware()
         {

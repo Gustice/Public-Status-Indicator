@@ -2,4 +2,5 @@
 **/obj
 **/packages
 **/*.user
+**/*.suo
 PublicStatusIndicator.zip

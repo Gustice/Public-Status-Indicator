@@ -8,6 +8,7 @@ using PublicStatusIndicator.Webserver;
 
 namespace PublicStatusIndicator.ApiController
 {
+    [Authentication]
     internal class StatusController : ApiController
     {
         [Route("/StatusController/Idle")]
@@ -19,10 +20,10 @@ namespace PublicStatusIndicator.ApiController
                 () => { engine.RefreshTimer.Start(); }
             );
 
-            return Ok(engine.State);
+            return await Ok(engine.StateOutputs[engine.State]);
         }
 
-
+        [Authentication]
         [Route("/StatusController/InProgress")]
         public async Task<HttpResponseMessage> InProgress()
         {
@@ -31,7 +32,7 @@ namespace PublicStatusIndicator.ApiController
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
                 () => { engine.RefreshTimer.Start(); }
             );
-            return Ok(engine.State);
+            return await Ok(engine.StateOutputs[engine.State]);
         }
 
 
@@ -43,7 +44,8 @@ namespace PublicStatusIndicator.ApiController
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
                 () => { engine.RefreshTimer.Start(); }
             );
-            return Ok(engine.State);
+
+            return await Ok(engine.StateOutputs[engine.State]);
         }
 
 
@@ -55,7 +57,20 @@ namespace PublicStatusIndicator.ApiController
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
                 () => { engine.RefreshTimer.Start(); }
             );
-            return Ok(engine.State);
+            return await Ok(engine.StateOutputs[engine.State]);
         }
+
+
+        [Route("/StatusController/Blank")]
+        public async Task<HttpResponseMessage> Blank()
+        {
+            var engine = InidicatorEngine.Instance;
+            
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+                () => { engine.BlankLeds(); }
+            );
+            return await Ok("Off :)");
+        }
+
     }
 }

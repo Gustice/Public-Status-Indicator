@@ -94,9 +94,16 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApiController\ApiController.cs" />
+    <Compile Include="ApiController\StatusController.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IndicatorEngine\Effect.cs" />
+    <Compile Include="IndicatorEngine\Engine.cs" />
+    <Compile Include="IndicatorEngine\ObersableBrushes.cs" />
+    <Compile Include="IndicatorEngine\PulseEffect.cs" />
+    <Compile Include="IndicatorEngine\RotateEffect.cs" />
     <Compile Include="IndicatorEngine\StatusIndicator.cs" />
     <Compile Include="LED_Indicator.cs" />
     <Compile Include="LED_Strip.cs" />
@@ -104,6 +111,9 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Webserver\Route.cs" />
+    <Compile Include="Webserver\RouteManager.cs" />
+    <Compile Include="Webserver\Webserver.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

@@ -1,340 +1,206 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.UI;
 
 namespace PublicStatusIndicator.IndicatorEngine
 {
-    class StatusIndicator
+    public class StatusIndicator
     {
-        int virtualTemplateLength;
+        private const int FadingStart = 10;
 
-        Color[] VirtualRing;
+        private readonly Color[] _badTemplate;
+        private readonly Color[] _goodTemplate;
+        private readonly Color[] _processTemplate;
+        private readonly Color[] _virtualRing;
 
-        Color[] ProcessTemplate;
-        Color[] GoodTemplate;
-        Color[] BadTemplate;
+        private int _fadingCnt;
+        private EngineState _fadingState;
+        private EngineState _lastState = EngineState.Idle;
+        
+        private readonly PulseEffect _virBadEffect;
+        private readonly PulseEffect _virGoodEffect;
+        private readonly RotateEffect _virPrcsEffect;
+
 
         public StatusIndicator(int targetCnt, int smoothFactor)
         {
-            virtualTemplateLength = targetCnt * smoothFactor;
-            VirtualRing = new Color[targetCnt];
+            var virtualTemplateLength = targetCnt * smoothFactor;
+            _virtualRing = new Color[targetCnt];
+            _processTemplate = new Color[virtualTemplateLength];
+            _goodTemplate = new Color[virtualTemplateLength];
+            _badTemplate = new Color[virtualTemplateLength];
 
-            ProcessTemplate = new Color[virtualTemplateLength];
-            GoodTemplate = new Color[virtualTemplateLength];
-            BadTemplate = new Color[virtualTemplateLength];
 
+            InitCurves(virtualTemplateLength, ref _processTemplate, ref _goodTemplate, ref _badTemplate);
 
-            InitCurves(virtualTemplateLength, ref ProcessTemplate, ref GoodTemplate, ref BadTemplate);
-
-            VirPrcsEffect = new RotateEffect(ProcessTemplate, VirtualRing);
-            VirGoodEffect = new PulseEffect(GoodTemplate, VirtualRing);
-            VirBadEffect = new PulseEffect(BadTemplate, VirtualRing);
+            _virPrcsEffect = new RotateEffect(_processTemplate, _virtualRing);
+            _virGoodEffect = new PulseEffect(_goodTemplate, _virtualRing);
+            _virBadEffect = new PulseEffect(_badTemplate, _virtualRing);
         }
 
-        void InitCurves(int length, ref Color[] processTemp, ref Color[] goodTemp, ref Color[] badTemp)
+        private void InitCurves(int length, ref Color[] processTemp, ref Color[] goodTemp, ref Color[] badTemp)
         {
-            int[] prcs = new int[length];
-            int[] good = new int[length];
-            int[] bad = new int[length];
-            int OffsetBrightnes = Byte.MaxValue / 4;
+            var prcs = new int[length];
+            var good = new int[length];
+            var bad = new int[length];
+            var offsetBrightnes = byte.MaxValue / 4;
 
 
             // Erzeuge einen zentralen Puls für den Process
-            prcs = GenerateGausianPulse(prcs.Length, 10, OffsetBrightnes);
-            for (int i = 0; i < length; i++)
-            {
-                processTemp[i] = Color.FromArgb(0xFF, (byte)prcs[i], (byte)prcs[i], 0x00);
-            }
+            prcs = GenerateGausianPulse(prcs.Length, 10, offsetBrightnes);
+            for (var i = 0; i < length; i++)
+                processTemp[i] = Color.FromArgb(0xFF, (byte) prcs[i], (byte) prcs[i], 0x00);
 
             // Zeuge einen erkennbaren Puls für den Good-Status 
-            int[] tempG = GenerateGausianPulse(prcs.Length / 2, 3, OffsetBrightnes);
-            for (int i = 0; i < tempG.Length; i++)
-            {
+            var tempG = GenerateGausianPulse(prcs.Length / 2, 3, offsetBrightnes);
+            for (var i = 0; i < tempG.Length; i++)
                 good[i] = tempG[i];
-            }
-            for (int i = tempG.Length; i < good.Length; i++)
-            {
-                good[i] = OffsetBrightnes;
-            }
-            for (int i = 0; i < length; i++)
-            {
-                goodTemp[i] = Color.FromArgb(0xFF, 0x00, (byte)good[i], 0x00);
-            }
+            for (var i = tempG.Length; i < good.Length; i++)
+                good[i] = offsetBrightnes;
+            for (var i = 0; i < length; i++)
+                goodTemp[i] = Color.FromArgb(0xFF, 0x00, (byte) good[i], 0x00);
 
 
             // Erzuge drei erkennbaren Pulse für den Bad-Status 
-            int[] tempB = GenerateGausianPulse(prcs.Length / 4, 3, OffsetBrightnes);
-            for (int i = 0; i < tempB.Length; i++)
+            var tempB = GenerateGausianPulse(prcs.Length / 4, 3, offsetBrightnes);
+            for (var i = 0; i < tempB.Length; i++)
             {
                 bad[i] = tempB[i];
                 bad[i + tempB.Length] = tempB[i];
-                bad[i + (2 * tempB.Length)] = tempB[i];
+                bad[i + 2 * tempB.Length] = tempB[i];
             }
-            for (int i = tempB.Length * 3; i < bad.Length; i++)
-            {
-                bad[i] = OffsetBrightnes;
-            }
-            for (int i = 0; i < length; i++)
-            {
-                badTemp[i] = Color.FromArgb(0xFF, (byte)bad[i], 0x00, 0x00);
-            }
+            for (var i = tempB.Length * 3; i < bad.Length; i++)
+                bad[i] = offsetBrightnes;
+            for (var i = 0; i < length; i++)
+                badTemp[i] = Color.FromArgb(0xFF, (byte) bad[i], 0x00, 0x00);
         }
 
-        public void GetCurvesAsGrayValues(out byte[] processStateProfile, out byte[] goodStateProfile, out byte[] badStateProfile)
+        public void GetCurvesAsGrayValues(out byte[] processStateProfile, out byte[] goodStateProfile,
+            out byte[] badStateProfile)
         {
-            processStateProfile = MakeGrayValuesToDataProfile(ProcessTemplate);
-            goodStateProfile = MakeGrayValuesToDataProfile(GoodTemplate);
-            badStateProfile = MakeGrayValuesToDataProfile(BadTemplate);
+            processStateProfile = MakeGrayValuesToDataProfile(_processTemplate);
+            goodStateProfile = MakeGrayValuesToDataProfile(_goodTemplate);
+            badStateProfile = MakeGrayValuesToDataProfile(_badTemplate);
         }
 
         private static byte[] MakeGrayValuesToDataProfile(Color[] colorArray)
         {
-            byte[] outputArray = new byte[colorArray.Length];
+            var outputArray = new byte[colorArray.Length];
 
-            int[] grayArray = new int[colorArray.Length];
-            int maxValue = 0;
-            for (int i = 0; i < colorArray.Length; i++)
+            var grayArray = new int[colorArray.Length];
+            var maxValue = 0;
+            for (var i = 0; i < colorArray.Length; i++)
             {
                 grayArray[i] = colorArray[i].R;
                 grayArray[i] += colorArray[i].G;
                 grayArray[i] += colorArray[i].B;
-                grayArray[i] = (grayArray[i] * colorArray[i].A) / Byte.MaxValue;
+                grayArray[i] = grayArray[i] * colorArray[i].A / byte.MaxValue;
                 maxValue = Math.Max(maxValue, grayArray[i]);
             }
             // Gleichverteilung auf Byte normieren
-            for (int i = 0; i < grayArray.Length; i++)
-            {
-                outputArray[i] = (byte)(grayArray[i] * Byte.MaxValue / maxValue);
-            }
+            for (var i = 0; i < grayArray.Length; i++)
+                outputArray[i] = (byte) (grayArray[i] * byte.MaxValue / maxValue);
 
             return outputArray;
         }
 
         private static int[] GenerateGausianPulse(int length, int peakForm, int offset)
         {
-            int[] tempplate = new int[length];
-            int temporaryMax = 0;
-            int idx = 0;
-            int midLen = tempplate.Length / 2;
-            for (int i = -midLen; i < midLen; i++)
+            var tempplate = new int[length];
+            var temporaryMax = 0;
+            var idx = 0;
+            var midLen = tempplate.Length / 2;
+            for (var i = -midLen; i < midLen; i++)
             {
-                tempplate[idx] = (int)(Math.Exp(-(Math.Pow(peakForm * i / midLen, 2))) * Byte.MaxValue) + offset;
+                tempplate[idx] = (int) (Math.Exp(-Math.Pow(peakForm * i / midLen, 2)) * byte.MaxValue) + offset;
                 temporaryMax = Math.Max(temporaryMax, tempplate[idx]);
                 idx++;
             }
             // Gleichverteilung auf Byte normieren
-            for (int i = 0; i < tempplate.Length; i++)
-            {
-                tempplate[i] = tempplate[i] * Byte.MaxValue / temporaryMax;
-            }
+            for (var i = 0; i < tempplate.Length; i++)
+                tempplate[i] = tempplate[i] * byte.MaxValue / temporaryMax;
 
             return tempplate;
         }
 
-
-
-        E_States lastState = E_States.Idle;
-        E_States FadingState;
-
-        int fadingCnt = 0;
-        const int FADING_START = 10;
-
-        public Color[] EffectAccordingToState(E_States currentState)
+        public Color[] EffectAccordingToState(EngineState currentState)
         {
-            if (currentState != lastState)
+            if (currentState != _lastState)
             {
-                FadingState = lastState;
-                lastState = currentState;
-                fadingCnt = FADING_START;
+                _fadingState = _lastState;
+                _lastState = currentState;
+                _fadingCnt = FadingStart;
                 ResetEffekt(currentState);
             }
 
-            Color[] RingColors1 = new Color[0];
-            Color[] RingColors2 = new Color[0];
+            var ringColors1 = GenerateNewImage(currentState);
 
-            RingColors1 = GenerateNewImage(currentState);
-
-            if (fadingCnt > 0)
+            if (_fadingCnt > 0)
             {
-                fadingCnt--;
-                RingColors2 = GenerateNewImage(FadingState);
+                _fadingCnt--;
+                var ringColors2 = GenerateNewImage(_fadingState);
 
-                int onfadingCnt = FADING_START - fadingCnt;
-                for (int i = 0; i < VirtualRing.Length; i++)
+                var onfadingCnt = FadingStart - _fadingCnt;
+                for (var i = 0; i < _virtualRing.Length; i++)
                 {
-                    VirtualRing[i].R = (byte)(((int)RingColors1[i].R * onfadingCnt + (int)RingColors2[i].R * fadingCnt) / 10);
-                    VirtualRing[i].G = (byte)(((int)RingColors1[i].G * onfadingCnt + (int)RingColors2[i].G * fadingCnt) / 10);
-                    //VirtualRing[i].B = (byte)(((int)RingColors1[i].B * onfadingCnt + (int)RingColors2[i].B * fadingCnt) / 10);
-                    VirtualRing[i].B = 0;
+                    _virtualRing[i].R = (byte) ((ringColors1[i].R * onfadingCnt + ringColors2[i].R * _fadingCnt) / 10);
+                    _virtualRing[i].G = (byte) ((ringColors1[i].G * onfadingCnt + ringColors2[i].G * _fadingCnt) / 10);
+                    _virtualRing[i].B = 0;
                 }
             }
             else
             {
-                for (int i = 0; i < VirtualRing.Length; i++)
-                {
-                    VirtualRing[i] = RingColors1[i];
-                }
+                for (var i = 0; i < _virtualRing.Length; i++)
+                    _virtualRing[i] = ringColors1[i];
             }
-            return VirtualRing;
+            return _virtualRing;
         }
 
-        private Color[] GenerateNewImage(E_States state)
+        private Color[] GenerateNewImage(EngineState state)
         {
-            Color[] colorSeries = new Color[0];
+            var colorSeries = new Color[0];
             switch (state)
             {
-                case E_States.Idle:
-                    colorSeries = new Color[VirtualRing.Length];
-                    for (int i = 0; i < colorSeries.Length; i++)
-                    {
+                case EngineState.Idle:
+                    colorSeries = new Color[_virtualRing.Length];
+                    for (var i = 0; i < colorSeries.Length; i++)
                         colorSeries[i] = Color.FromArgb(0xFF, 0x20, 0x20, 0x20);
-                    }
                     break;
-                case E_States.Progress:
-                    colorSeries = VirPrcsEffect.RotateStep();
+                case EngineState.Progress:
+                    colorSeries = _virPrcsEffect.RotateStep();
                     break;
-                case E_States.Good:
-                    colorSeries = VirGoodEffect.PulseStep();
+                case EngineState.Good:
+                    colorSeries = _virGoodEffect.PulseStep();
                     break;
-                case E_States.Bad:
-                    colorSeries = VirBadEffect.PulseStep();
+                case EngineState.Bad:
+                    colorSeries = _virBadEffect.PulseStep();
                     break;
             }
 
             return colorSeries;
         }
 
-        private void ResetEffekt(E_States state)
+        private void ResetEffekt(EngineState state)
         {
             switch (state)
             {
-                case E_States.Progress:
-                    VirPrcsEffect.ResetIndex();
+                case EngineState.Progress:
+                    _virPrcsEffect.ResetIndex();
                     break;
-                case E_States.Good:
-                    VirGoodEffect.ResetIndex();
+                case EngineState.Good:
+                    _virGoodEffect.ResetIndex();
                     break;
-                case E_States.Bad:
-                    VirBadEffect.ResetIndex();
+                case EngineState.Bad:
+                    _virBadEffect.ResetIndex();
                     break;
-            }
-        }
-
-        RotateEffect VirPrcsEffect;
-        PulseEffect VirGoodEffect;
-        PulseEffect VirBadEffect;
-
-
-        class RotateEffect
-        {
-            int targetLenght;
-            int currentIdx;
-            int maxIndex;
-            int deltaStep;
-
-            Color[] Source;
-            Color[] Temp;
-
-            public RotateEffect(Color[] source, Color[] target)
-            {
-                currentIdx = 0;
-                targetLenght = target.Length;
-                maxIndex = source.Length;
-                deltaStep = maxIndex / targetLenght;
-
-                Source = source;
-                Temp = new Color[target.Length];
-            }
-
-            public Color[] RotateStep()
-            {
-                int relIdx = currentIdx;
-
-                for (int i = 0; i < targetLenght; i++)
-                {
-                    Temp[i] = Source[relIdx];
-                    relIdx += deltaStep;
-                    relIdx = SaturateIndex(relIdx);
-                }
-
-                currentIdx += deltaStep;
-                currentIdx = SaturateIndex(currentIdx);
-                return Temp;
-            }
-
-            private int SaturateIndex(int idx)
-            {
-                if (idx >= maxIndex)
-                {
-                    idx -= maxIndex;
-                }
-                return idx;
-            }
-
-            public void ResetIndex()
-            {
-                currentIdx = 0;
-            }
-        }
-
-        class PulseEffect
-        {
-            int targetLenght;
-            int currentIdx;
-            int maxIndex;
-            int deltaStep;
-
-            Color[] Source;
-            Color[] Temp;
-
-            public PulseEffect(Color[] source, Color[] target)
-            {
-                currentIdx = 0;
-                targetLenght = target.Length;
-                maxIndex = source.Length;
-                deltaStep = maxIndex / targetLenght;
-
-                Source = source;
-                Temp = new Color[target.Length];
-            }
-
-            public Color[] PulseStep()
-            {
-                for (int i = 0; i < targetLenght; i++)
-                {
-                    Temp[i] = Source[currentIdx];
-                }
-                currentIdx += deltaStep;
-                currentIdx = SaturateIndex(currentIdx);
-                return Temp;
-            }
-
-            private int SaturateIndex(int idx)
-            {
-                if (idx >= maxIndex)
-                {
-                    idx -= maxIndex;
-                }
-                return idx;
-            }
-
-            public void ResetIndex()
-            {
-                currentIdx = 0;
             }
         }
     }
 
-
-    enum E_States
+    public enum EngineState
     {
         Idle,
         Progress,
         Good,
-        Bad,
+        Bad
     }
-
 }

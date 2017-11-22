@@ -46,10 +46,9 @@ namespace PublicStatusIndicator.Webserver
                         dataRead = buffer.Length;
                     }
                 }
-
+                
                 _response = new HttpResponseMessage(HttpStatusCode.Found);
-                //_response.Content = new StringContent("huhuh ?");
-                _response = RouteManager.CurrentRouteManager.InvokeMethod(request.ToString());
+                _response = await RouteManager.CurrentRouteManager.InvokeMethod(request.ToString());
 
                 using (var output = socket.OutputStream)
                 {
@@ -58,7 +57,11 @@ namespace PublicStatusIndicator.Webserver
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Fehler in ProcessRequestAsync: " + ex.Message);
+                _response = new HttpResponseMessage(HttpStatusCode.InternalServerError) {Content = new StringContent(ex.Message)};
+                using (var output = socket.OutputStream)
+                {
+                    await WriteResponseAsync(_response, output);
+                }
             }
         }
 

@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace PublicStatusIndicator.ApiController
 {
@@ -14,43 +15,56 @@ namespace PublicStatusIndicator.ApiController
         /// </summary>
         /// <param name="response">Das Objekt das ausgegeben werden soll</param>
         /// <returns>HttpResponse OK mit Json Daten</returns>
-        public HttpResponseMessage Ok(object response)
+        public async Task<HttpResponseMessage> Ok(object response)
         {
-            var responseMessgae = new HttpResponseMessage();
-            try
+            var responseMessgae = await Task.Factory.StartNew(async () =>
             {
-                string json;
-                var jsonSerializer = new DataContractJsonSerializer(response.GetType());
-
-                using (var memoryStream = new MemoryStream())
+                var message = new HttpResponseMessage();
+                try
                 {
-                    jsonSerializer.WriteObject(memoryStream, response);
-                    json = Encoding.UTF8.GetString(memoryStream.ToArray());
+                    
+                    string json;
+                    var jsonSerializer = new DataContractJsonSerializer(response.GetType());
+
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        jsonSerializer.WriteObject(memoryStream, response);
+                        json = Encoding.UTF8.GetString(memoryStream.ToArray());
+                    }
+                    message.StatusCode = HttpStatusCode.OK;
+                    HttpContent contentPost = new StringContent(json, Encoding.UTF8, "application/json");
+                    message.Content = contentPost;
                 }
-                responseMessgae.StatusCode = HttpStatusCode.OK;
-                HttpContent contentPost = new StringContent(json, Encoding.UTF8, "application/json");
-                responseMessgae.Content = contentPost;
-            }
-            catch (Exception ex)
+                catch (Exception ex)
+                {
+                    return await InternalServerError(ex);
+                }
+                return message;
+            });
+            return responseMessgae.Result;
+        }
+
+        public async Task <HttpResponseMessage> NotFound()
+        {
+            var response = await Task.Factory.StartNew(() =>
+           {
+               var httpResponseMessage = new HttpResponseMessage() { Content = new StringContent("No Route Found") };
+               httpResponseMessage.StatusCode = HttpStatusCode.NotFound;
+               return httpResponseMessage;
+           });
+            return response;
+        }
+
+
+        public async Task<HttpResponseMessage> InternalServerError(Exception exception)
+        {
+            var response = await Task.Factory.StartNew(() =>
             {
-                return InternalServerError(ex);
-            }
-            return responseMessgae;
-        }
-
-        public HttpResponseMessage NotFound()
-        {
-            var responseMessgae = new HttpResponseMessage();
-            responseMessgae.StatusCode = HttpStatusCode.NotFound;
-            return responseMessgae;
-        }
-
-
-        public HttpResponseMessage InternalServerError(Exception exception)
-        {
-            var responseMessgae = new HttpResponseMessage() {Content = new StringContent(exception.Message)};
-            responseMessgae.StatusCode = HttpStatusCode.InternalServerError;
-            return responseMessgae;
+                var httpResponseMessage = new HttpResponseMessage() { Content = new StringContent(exception.Message) };
+                httpResponseMessage.StatusCode = HttpStatusCode.InternalServerError;
+                return httpResponseMessage;
+            });
+            return response;
         }
 
     }

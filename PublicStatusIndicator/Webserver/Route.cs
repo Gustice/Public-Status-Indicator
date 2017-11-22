@@ -30,9 +30,21 @@ namespace PublicStatusIndicator.Webserver
         /// </summary>
         public ParameterInfo[] Params { get; set; }
 
+        /// <summary>
+        ///     Indicates whether the controller or the route itself need auth to invoke
+        /// </summary>
+        public bool AuthenticationRequired { get; set; }
+
         public override string ToString()
         {
             return Url;
         }
+    }
+
+    /// <summary>
+    ///     Indicates that the Controller needs Authentication
+    /// </summary>
+    internal class Authentication : Attribute
+    {
     }
 }

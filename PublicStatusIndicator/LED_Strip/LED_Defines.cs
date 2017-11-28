@@ -3,13 +3,6 @@ using System.Collections.Generic;
 
 namespace PublicStatusIndicator
 {
-    internal class LED_Indicator
-    {
-        LED_Strip Strip;
-
-    }
-
-
     /// <summary>
     /// RGB-LED-Settings for color channels and drive current for one LED
     /// </summary>

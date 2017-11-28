@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PublicStatusIndicator.IndicatorEngine;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,8 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
+
+// @todo VonBlank auf Idle
 namespace PublicStatusIndicator
 {
     /// <summary>
@@ -22,15 +25,50 @@ namespace PublicStatusIndicator
     /// </summary>
     sealed partial class App : Application
     {
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
+        private const int LEDSTRIP_LEN = 20;
+        private const int MS_TICK = 50;
+
+        Frame rootFrame = Window.Current.Content as Frame;
+        LED_Strip _ledStrip;
+
+        public EngineState _state { get; set; }
+        public DispatcherTimer RefreshTimer { get; set; }
+
+        public delegate void SetNewState(EngineState newState);
+
         public App()
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
+
+            _ledStrip = new LED_Strip(LEDSTRIP_LEN);
+            _state = EngineState.Blank;
+            
+            RefreshTimer = new DispatcherTimer();
+            RefreshTimer.Interval = TimeSpan.FromMilliseconds(MS_TICK);
+            RefreshTimer.Tick += LED_Refresh_Tick;
         }
+
+        public void ChangeState_CB(EngineState toState)
+        {
+            _ledStrip.ChangeState(toState);
+            if (RefreshTimer.IsEnabled != true)
+            {
+                RefreshTimer.Start();
+            }
+        }
+
+        private void LED_Refresh_Tick(object sender, object e)
+        {
+            _ledStrip.RefreshEvent();
+
+            if (rootFrame.Content is MainPage)
+            {
+                // Event an die GUI verdrahten.
+                (rootFrame.Content as MainPage).RefreshEvent();
+            }
+        }
+
 
         /// <summary>
         /// Invoked when the application is launched normally by the end user.  Other entry points
@@ -45,8 +83,7 @@ namespace PublicStatusIndicator
                 this.DebugSettings.EnableFrameRateCounter = true;
             }
 #endif
-            Frame rootFrame = Window.Current.Content as Frame;
-
+            
             // Do not repeat app initialization when the Window already has content,
             // just ensure that the window is active
             if (rootFrame == null)
@@ -73,6 +110,12 @@ namespace PublicStatusIndicator
                     // configuring the new page by passing required information as a navigation
                     // parameter
                     rootFrame.Navigate(typeof(MainPage), e.Arguments);
+
+                    if (rootFrame.Content is MainPage)
+                    {
+                        // Event an die GUI verdrahten.
+                        (rootFrame.Content as MainPage).SetNewStateByGui += new SetNewState(ChangeState_CB);
+                    }
                 }
                 // Ensure the current window is active
                 Window.Current.Activate();

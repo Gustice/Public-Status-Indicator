@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Windows.UI;
 
 namespace PublicStatusIndicator.IndicatorEngine
@@ -10,13 +11,14 @@ namespace PublicStatusIndicator.IndicatorEngine
         private readonly Color[] _badTemplate;
         private readonly Color[] _goodTemplate;
         private readonly Color[] _processTemplate;
+
         private readonly Color[] _virtualRing;
 
         private int _fadingCnt;
         private EngineState _fadingState;
         private EngineState _lastState = EngineState.Idle;
-        private readonly PulseEffect _virBadEffect;
 
+        private readonly PulseEffect _virBadEffect;
         private readonly PulseEffect _virGoodEffect;
         private readonly RotateEffect _virPrcsEffect;
 
@@ -131,8 +133,6 @@ namespace PublicStatusIndicator.IndicatorEngine
                 _fadingCnt = FadingStart;
                 ResetEffekt(currentState);
             }
-            
-
 
             var ringColors1 = GenerateNewImage(currentState);
 
@@ -144,9 +144,9 @@ namespace PublicStatusIndicator.IndicatorEngine
                 var onfadingCnt = FadingStart - _fadingCnt;
                 for (var i = 0; i < _virtualRing.Length; i++)
                 {
-                    _virtualRing[i].R = (byte) ((ringColors1[i].R * onfadingCnt + ringColors2[i].R * _fadingCnt) / 10);
-                    _virtualRing[i].G = (byte) ((ringColors1[i].G * onfadingCnt + ringColors2[i].G * _fadingCnt) / 10);
-                    _virtualRing[i].B = 0;
+                    _virtualRing[i].R = (byte) ((ringColors1[i].R * onfadingCnt + ringColors2[i].R * _fadingCnt) / FadingStart);
+                    _virtualRing[i].G = (byte) ((ringColors1[i].G * onfadingCnt + ringColors2[i].G * _fadingCnt) / FadingStart);
+                    _virtualRing[i].B = (byte)((ringColors1[i].B * onfadingCnt + ringColors2[i].B * _fadingCnt) / FadingStart);
                 }
             }
             else
@@ -162,19 +162,27 @@ namespace PublicStatusIndicator.IndicatorEngine
             var colorSeries = new Color[0];
             switch (state)
             {
+                case EngineState.Blank:
+                    colorSeries = new Color[_virtualRing.Length];
+                    for (var i = 0; i < colorSeries.Length; i++)
+                        colorSeries[i] = Color.FromArgb(0xFF, 0x00, 0x00, 0x00);
+                    break;
                 case EngineState.Idle:
                     colorSeries = new Color[_virtualRing.Length];
                     for (var i = 0; i < colorSeries.Length; i++)
-                        colorSeries[i] = Color.FromArgb(0xFF, 0x20, 0x20, 0x20);
+                        colorSeries[i] = Color.FromArgb(0xFF, 0x02, 0x02, 0x02);
                     break;
                 case EngineState.Progress:
                     colorSeries = _virPrcsEffect.RotateStep();
                     break;
-                case EngineState.Good:
-                    colorSeries = _virGoodEffect.PulseStep();
-                    break;
                 case EngineState.Bad:
                     colorSeries = _virBadEffect.PulseStep();
+                    break;
+                case EngineState.Unstable:
+                    colorSeries = _virGoodEffect.PulseStep();
+                    break;
+                case EngineState.Stable:
+                    colorSeries = _virGoodEffect.PulseStep();
                     break;
             }
 
@@ -188,7 +196,7 @@ namespace PublicStatusIndicator.IndicatorEngine
                 case EngineState.Progress:
                     _virPrcsEffect.ResetIndex();
                     break;
-                case EngineState.Good:
+                case EngineState.Stable:
                     _virGoodEffect.ResetIndex();
                     break;
                 case EngineState.Bad:
@@ -200,10 +208,36 @@ namespace PublicStatusIndicator.IndicatorEngine
 
     public enum EngineState
     {
+        Blank,
         Idle,
         Progress,
-        Good,
         Bad,
-        Blank
+        Unstable,
+        Stable,
     }
+
+    public class EngineDefines
+    {
+        public static readonly Dictionary<EngineState, string> StateOutputs = new Dictionary<EngineState, string>
+        {
+            {EngineState.Blank, "Blank"},
+            {EngineState.Idle, "Idle"},
+            {EngineState.Progress, "Progress"},
+            {EngineState.Bad, "BAD"},
+            {EngineState.Unstable, "Unstable"},
+            {EngineState.Stable, "Stable"},
+        };
+
+        public static readonly Dictionary<EngineState, Color> StateColors = new Dictionary<EngineState, Color>
+        {
+            {EngineState.Blank,     Color.FromArgb(0xFF, 0x00, 0x00, 0x00)},
+            {EngineState.Idle,      Color.FromArgb(0xFF, 0x08, 0x08, 0x08)},
+            {EngineState.Progress,  Color.FromArgb(0xFF, 0x40, 0x40, 0x00)},
+            {EngineState.Bad,       Color.FromArgb(0xFF, 0x80, 0x00, 0x00)},
+            {EngineState.Unstable,  Color.FromArgb(0xFF, 0x20, 0x60, 0x00)},
+            {EngineState.Stable,    Color.FromArgb(0xFF, 0x00, 0x80, 0x00)},
+        };
+    }
+
+
 }

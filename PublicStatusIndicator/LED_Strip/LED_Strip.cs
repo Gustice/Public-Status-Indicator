@@ -2,13 +2,72 @@
 using System.Collections.Generic;
 using Windows.Devices.Spi;
 using Windows.UI;
+using System.Threading.Tasks;
+
+using PublicStatusIndicator.IndicatorEngine;
+using Windows.Devices.Enumeration;
 
 namespace PublicStatusIndicator
 {
+
     internal class LED_Strip
     {
+        private const int HW_SPI_CS_LINE = 0;
+        private const string HW_SPI_LED_CONTROLLER = "SPI0";
+
+        private LED_APA102 _leDstrip;
+        private Color[] _rgBring;
+        private SpiDevice _statusLedInterface;
+        private readonly StatusIndicator _ledIndicator;
+
+        private EngineState _state = EngineState.Blank;
+        int _numPixels;
+
+        public LED_Strip(int numPixels)
+        {
+            _numPixels = numPixels;
+            InitHardware();
+            _ledIndicator = new StatusIndicator(_numPixels, _numPixels * 4);
+            _rgBring = new Color[_numPixels];
+        }
+
+        public void RefreshEvent()
+        {
+            _rgBring = _ledIndicator.EffectAccordingToState(_state);
+            _leDstrip.SetAllLEDs(_rgBring);
+            _leDstrip.UpdateLEDs();
+        }
+
+        public void ChangeState(EngineState newState)
+        {
+            _state = newState;
+        }
 
 
+        private async void InitHardware()
+        {
+            await InitSpi();
+            _leDstrip = new LED_APA102(_statusLedInterface, _numPixels);
+            _leDstrip.BlankLEDs();
+        }
+
+        private async Task InitSpi()
+        {
+            try
+            {
+                var settings = new SpiConnectionSettings(HW_SPI_CS_LINE);
+                settings.ClockFrequency = 4000000;
+                settings.Mode = SpiMode.Mode0; // CLK-Idle ist low, Dataset on Falling Edge, Sample on Rising Edge
+                var spiAqs = SpiDevice.GetDeviceSelector(HW_SPI_LED_CONTROLLER);
+                var devicesInfo = await DeviceInformation.FindAllAsync(spiAqs);
+                _statusLedInterface = await SpiDevice.FromIdAsync(devicesInfo[0].Id, settings);
+            }
+            /* If initialization fails, display the exception and stop running */
+            catch (Exception ex)
+            {
+                throw new Exception("SPI Initialization Failed", ex);
+            }
+        }
     }
 
     enum E_SPIinterfaces

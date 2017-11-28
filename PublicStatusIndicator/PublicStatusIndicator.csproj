@@ -99,14 +99,18 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="GUI_Elements\Preview.xaml.cs">
+      <DependentUpon>Preview.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="GUI_Elements\Settings.xaml.cs">
+      <DependentUpon>Settings.xaml</DependentUpon>
+    </Compile>
     <Compile Include="IndicatorEngine\Effect.cs" />
-    <Compile Include="IndicatorEngine\Engine.cs" />
-    <Compile Include="IndicatorEngine\ObersableBrushes.cs" />
     <Compile Include="IndicatorEngine\PulseEffect.cs" />
     <Compile Include="IndicatorEngine\RotateEffect.cs" />
     <Compile Include="IndicatorEngine\StatusIndicator.cs" />
-    <Compile Include="LED_Indicator.cs" />
-    <Compile Include="LED_Strip.cs" />
+    <Compile Include="LED_Strip\LED_Defines.cs" />
+    <Compile Include="LED_Strip\LED_Strip.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
@@ -136,6 +140,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="GUI_Elements\Preview.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="GUI_Elements\Settings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -11,66 +11,82 @@ namespace PublicStatusIndicator.ApiController
     [Authentication]
     internal class StatusController : ApiController
     {
-        //[Route("/StatusController/Idle")]
-        //public async Task<HttpResponseMessage> Idle()
-        //{
-        //    var engine =  InidicatorEngine.Instance;
-        //    engine.State = EngineState.Idle;
-        //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        //        () => { engine.RefreshTimer.Start(); }
-        //    );
+        App ParentApp;
 
-        //    return await Ok(engine.StateOutputs[engine.State]);
-        //}
+        public StatusController(App parent)
+        {
+            ParentApp = parent;
+        }
 
-        //[Authentication]
-        //[Route("/StatusController/InProgress")]
-        //public async Task<HttpResponseMessage> InProgress()
-        //{
-        //    var engine = InidicatorEngine.Instance;
-        //    engine.State = EngineState.Progress;
-        //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        //        () => { engine.RefreshTimer.Start(); }
-        //    );
-        //    return await Ok(engine.StateOutputs[engine.State]);
-        //}
+        public event SetNewState SetNewStateByHost;
 
+        [Route("/StatusController/Blank")]
+        public async Task<HttpResponseMessage> Blank()
+        {
+            SetNewStateByHost?.Invoke(EngineState.Blank);
 
-        //[Route("/StatusController/Good")]
-        //public async Task<HttpResponseMessage> Good()
-        //{
-        //    var engine = InidicatorEngine.Instance;
-        //    engine.State = EngineState.Stable;
-        //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        //        () => { engine.RefreshTimer.Start(); }
-        //    );
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+                    () => { ParentApp.RefreshTimer.Start(); }
+                );
+            return await Ok("Off :)");
+        }
 
-        //    return await Ok(engine.StateOutputs[engine.State]);
-        //}
+        [Route("/StatusController/Idle")]
+        public async Task<HttpResponseMessage> Idle()
+        {
+            SetNewStateByHost?.Invoke(EngineState.Idle);
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+        () => { ParentApp.RefreshTimer.Start(); }
+    );
 
+            return await Ok(EngineDefines.StateOutputs[EngineState.Idle]);
+        }
 
-        //[Route("/StatusController/Bad")]
-        //public async Task<HttpResponseMessage> Bad()
-        //{
-        //    var engine = InidicatorEngine.Instance;
-        //    engine.State = EngineState.Bad;
-        //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        //        () => { engine.RefreshTimer.Start(); }
-        //    );
-        //    return await Ok(engine.StateOutputs[engine.State]);
-        //}
+        [Authentication]
+        [Route("/StatusController/InProgress")]
+        public async Task<HttpResponseMessage> InProgress()
+        {
+            SetNewStateByHost?.Invoke(EngineState.Progress);
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+        () => { ParentApp.RefreshTimer.Start(); }
+    );
+
+            return await Ok(EngineDefines.StateOutputs[EngineState.Progress]);
+        }
 
 
-        //[Route("/StatusController/Blank")]
-        //public async Task<HttpResponseMessage> Blank()
-        //{
-        //    var engine = InidicatorEngine.Instance;
-            
-        //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        //        () => { engine.BlankLeds(); }
-        //    );
-        //    return await Ok("Off :)");
-        //}
+        [Route("/StatusController/Bad")]
+        public async Task<HttpResponseMessage> Bad()
+        {
+            SetNewStateByHost?.Invoke(EngineState.Bad);
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+        () => { ParentApp.RefreshTimer.Start(); }
+    );
 
+            return await Ok(EngineDefines.StateOutputs[EngineState.Bad]);
+        }
+
+
+        [Route("/StatusController/Unstable")]
+        public async Task<HttpResponseMessage> Unstable()
+        {
+            SetNewStateByHost?.Invoke(EngineState.Unstable);
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+        () => { ParentApp.RefreshTimer.Start(); }
+    );
+
+            return await Ok(EngineDefines.StateOutputs[EngineState.Unstable]);
+        }
+
+
+        [Route("/StatusController/Stable")]
+        public async Task<HttpResponseMessage> Stable()
+        {
+            SetNewStateByHost?.Invoke(EngineState.Stable);
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+        () => { ParentApp.RefreshTimer.Start(); }
+    );
+            return await Ok(EngineDefines.StateOutputs[EngineState.Stable]);
+        }
     }
 }

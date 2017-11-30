@@ -27,7 +27,8 @@ namespace PublicStatusIndicator
         {
             _numPixels = numPixels;
             InitHardware();
-            _ledIndicator = new StatusIndicator(_numPixels, _numPixels * 4);
+            _ledIndicator = new StatusIndicator(_numPixels, _numPixels * 6);
+            _ledIndicator.MaxBrighness = 0xF0;
             _rgBring = new Color[_numPixels];
         }
 

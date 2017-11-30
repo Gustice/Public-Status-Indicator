@@ -15,11 +15,19 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using Windows.System.Threading;
+
+// To use the Web-Server
+using PublicStatusIndicator.Webserver;
+using PublicStatusIndicator.ApiController;
 
 
 // @todo VonBlank auf Idle
 namespace PublicStatusIndicator
 {
+    public delegate void SetNewState(EngineState newState);
+
+
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
@@ -34,7 +42,6 @@ namespace PublicStatusIndicator
         public EngineState _state { get; set; }
         public DispatcherTimer RefreshTimer { get; set; }
 
-        public delegate void SetNewState(EngineState newState);
 
         public App()
         {
@@ -43,19 +50,32 @@ namespace PublicStatusIndicator
 
             _ledStrip = new LED_Strip(LEDSTRIP_LEN);
             _state = EngineState.Blank;
-            
+
+            InitWebserver();
+
+
             RefreshTimer = new DispatcherTimer();
             RefreshTimer.Interval = TimeSpan.FromMilliseconds(MS_TICK);
             RefreshTimer.Tick += LED_Refresh_Tick;
         }
 
+        private void InitWebserver()
+        {
+            StatusController webStatusCtrl = new StatusController(this);
+            webStatusCtrl.SetNewStateByHost += new SetNewState(ChangeState_CB);
+
+            RouteManager.CurrentRouteManager.Controllers.Add(webStatusCtrl);
+            RouteManager.CurrentRouteManager.InitRoutes();
+            var asyncAction = ThreadPool.RunAsync(workItem =>
+            {
+                var server = new HttpServer(80);
+            });
+        }
+
+
         public void ChangeState_CB(EngineState toState)
         {
             _ledStrip.ChangeState(toState);
-            if (RefreshTimer.IsEnabled != true)
-            {
-                RefreshTimer.Start();
-            }
         }
 
         private void LED_Refresh_Tick(object sender, object e)
@@ -115,6 +135,7 @@ namespace PublicStatusIndicator
                     {
                         // Event an die GUI verdrahten.
                         (rootFrame.Content as MainPage).SetNewStateByGui += new SetNewState(ChangeState_CB);
+                        (rootFrame.Content as MainPage).ParentApp = this;
                     }
                 }
                 // Ensure the current window is active

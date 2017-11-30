@@ -8,89 +8,138 @@ namespace PublicStatusIndicator.IndicatorEngine
     {
         private const int FadingStart = 10;
 
+        private const byte StartSeq = 0xE0;
+        private const byte Brightness = 10;
+
+        private const byte CommonAlpha = StartSeq & Brightness;
+
         private readonly Color[] _badTemplate;
-        private readonly Color[] _goodTemplate;
+        private readonly Color[] _unstableTemplate;
+        private readonly Color[] _stableTemplate;
         private readonly Color[] _processTemplate;
 
         private readonly Color[] _virtualRing;
 
-        private int _fadingCnt;
-        private EngineState _fadingState;
-        private EngineState _lastState = EngineState.Idle;
 
         private readonly PulseEffect _virBadEffect;
-        private readonly PulseEffect _virGoodEffect;
+        private readonly PulseEffect _virStabelEffect;
+        private readonly PulseEffect _virUnstabelEffect;
         private readonly RotateEffect _virPrcsEffect;
 
+        int virtualLenght;
+
+        public byte MaxBrighness { get; set; } = 0xFF;
 
         public StatusIndicator(int targetCnt, int smoothFactor)
         {
-            var virtualTemplateLength = targetCnt * smoothFactor;
+            virtualLenght = targetCnt * smoothFactor;
             _virtualRing = new Color[targetCnt];
-            _processTemplate = new Color[virtualTemplateLength];
-            _goodTemplate = new Color[virtualTemplateLength];
-            _badTemplate = new Color[virtualTemplateLength];
+            _processTemplate = new Color[virtualLenght];
+            _stableTemplate = new Color[virtualLenght];
+            _unstableTemplate = new Color[virtualLenght];
+            _badTemplate = new Color[virtualLenght];
 
-
-            InitCurves(virtualTemplateLength, ref _processTemplate, ref _goodTemplate, ref _badTemplate);
+            InitPulse(virtualLenght, ref _processTemplate);
+            InitPulsePause(virtualLenght, ref _stableTemplate);
+            InitColoredPulsesPause(virtualLenght, ref _unstableTemplate);
+            InitPulsesPause(virtualLenght, ref _badTemplate);
 
             _virPrcsEffect = new RotateEffect(_processTemplate, _virtualRing);
-            _virGoodEffect = new PulseEffect(_goodTemplate, _virtualRing);
+            _virStabelEffect = new PulseEffect(_stableTemplate, _virtualRing);
+            _virUnstabelEffect = new PulseEffect(_unstableTemplate, _virtualRing);
             _virBadEffect = new PulseEffect(_badTemplate, _virtualRing);
         }
 
-        private void InitCurves(int length, ref Color[] processTemp, ref Color[] goodTemp, ref Color[] badTemp)
+        private void InitPulse(int length, ref Color[] pulseTemp)
         {
-            var prcs = new int[length];
-            var good = new int[length];
-            var bad = new int[length];
-            var offsetBrightnes = byte.MaxValue / 4;
-
+            int[] p = new int[length];
+            int offsetBrightnes = byte.MaxValue / 4;
 
             // Erzeuge einen zentralen Puls für den Process
-            prcs = GenerateGausianPulse(prcs.Length, 10, offsetBrightnes);
-            for (var i = 0; i < length; i++)
-                processTemp[i] = Color.FromArgb(0xFF, (byte) prcs[i], (byte) prcs[i], 0x00);
+            p = GenerateGausianPulse(p.Length, 10, offsetBrightnes);
+            for (int i = 0; i < length; i++)
+                pulseTemp[i] = Color.FromArgb(MaxBrighness, (byte) p[i], (byte) (p[i]*12/16), 0x00);
+        }
+
+        private void InitPulsePause(int length, ref Color[] pulseTemp)
+        {
+            int[] p = new int[length];
+            int offsetBrightnes = byte.MaxValue / 4;
 
             // Zeuge einen erkennbaren Puls für den Good-Status 
-            var tempG = GenerateGausianPulse(prcs.Length / 2, 3, offsetBrightnes);
-            for (var i = 0; i < tempG.Length; i++)
-                good[i] = tempG[i];
-            for (var i = tempG.Length; i < good.Length; i++)
-                good[i] = offsetBrightnes;
-            for (var i = 0; i < length; i++)
-                goodTemp[i] = Color.FromArgb(0xFF, 0x00, (byte) good[i], 0x00);
+            int[] tempG = GenerateGausianPulse(p.Length / 2, 3, offsetBrightnes);
+            for (int i = 0; i < tempG.Length; i++)
+                p[i] = tempG[i];
+            for (int i = tempG.Length; i < p.Length; i++)
+                p[i] = offsetBrightnes;
+            for (int i = 0; i < length; i++)
+                pulseTemp[i] = Color.FromArgb(MaxBrighness, 0x00, (byte)p[i], 0x00);
+        }
 
+        private void InitPulsesPause(int length, ref Color[] pulseTemp)
+        {
+            int[] p = new int[length];
+            int offsetBrightnes = byte.MaxValue / 4;
 
             // Erzuge drei erkennbaren Pulse für den Bad-Status 
-            var tempB = GenerateGausianPulse(prcs.Length / 4, 3, offsetBrightnes);
-            for (var i = 0; i < tempB.Length; i++)
+            int[] tempB = GenerateGausianPulse(p.Length / 6, 3, offsetBrightnes);
+            for (int i = 0; i < tempB.Length; i++)
             {
-                bad[i] = tempB[i];
-                bad[i + tempB.Length] = tempB[i];
-                bad[i + 2 * tempB.Length] = tempB[i];
+                p[i] = tempB[i];
+                p[i + tempB.Length] = tempB[i];
+                p[i + 2 * tempB.Length] = tempB[i];
             }
-            for (var i = tempB.Length * 3; i < bad.Length; i++)
-                bad[i] = offsetBrightnes;
-            for (var i = 0; i < length; i++)
-                badTemp[i] = Color.FromArgb(0xFF, (byte) bad[i], 0x00, 0x00);
+            for (int i = tempB.Length * 3; i < p.Length; i++)
+                p[i] = offsetBrightnes;
+            for (int i = 0; i < length; i++)
+                pulseTemp[i] = Color.FromArgb(MaxBrighness, (byte)p[i], 0x00, 0x00);
+        }
+
+        private void InitColoredPulsesPause(int length, ref Color[] pulseTemp)
+        {
+            int[] p1 = new int[length];
+            int[] p2 = new int[length];
+
+            int offsetBrightnes = byte.MaxValue / 4;
+
+            // Erzuge drei erkennbaren Pulse für den fast Good-Status 
+            int[] tempP1 = GenerateGausianPulse(p1.Length / 4, 3, offsetBrightnes);
+            for (int i = 0; i < tempP1.Length; i++)
+            {
+                p1[i] = tempP1[i];
+                p1[i + tempP1.Length] = tempP1[i];
+            }
+            for (int i = tempP1.Length * 2; i < p1.Length; i++)
+                p1[i] = offsetBrightnes;
+
+            for (int i = 0; i < length; i++)
+                p2[i] = 0;
+
+            int[] tempP2 = GenerateGausianPulse(p1.Length / 4, 4, 0);
+            for (int i = 0; i < tempP2.Length; i++)
+            {
+                p2[i + tempP2.Length] = tempP2[i];
+            }
+
+            for (int i = 0; i < length; i++)
+                pulseTemp[i] = Color.FromArgb(MaxBrighness, (byte)p2[i], (byte) (p1[i]*12/16), 0x00);
         }
 
         public void GetCurvesAsGrayValues(out byte[] processStateProfile, out byte[] goodStateProfile,
             out byte[] badStateProfile)
         {
             processStateProfile = MakeGrayValuesToDataProfile(_processTemplate);
-            goodStateProfile = MakeGrayValuesToDataProfile(_goodTemplate);
+            goodStateProfile = MakeGrayValuesToDataProfile(_stableTemplate);
             badStateProfile = MakeGrayValuesToDataProfile(_badTemplate);
         }
 
         private static byte[] MakeGrayValuesToDataProfile(Color[] colorArray)
         {
-            var outputArray = new byte[colorArray.Length];
+            byte[] outputArray = new byte[colorArray.Length];
 
-            var grayArray = new int[colorArray.Length];
-            var maxValue = 0;
-            for (var i = 0; i < colorArray.Length; i++)
+            int[] grayArray = new int[colorArray.Length];
+            int maxValue = 0;
+            for (int i = 0; i < colorArray.Length; i++)
             {
                 grayArray[i] = colorArray[i].R;
                 grayArray[i] += colorArray[i].G;
@@ -99,7 +148,7 @@ namespace PublicStatusIndicator.IndicatorEngine
                 maxValue = Math.Max(maxValue, grayArray[i]);
             }
             // Gleichverteilung auf Byte normieren
-            for (var i = 0; i < grayArray.Length; i++)
+            for (int i = 0; i < grayArray.Length; i++)
                 outputArray[i] = (byte) (grayArray[i] * byte.MaxValue / maxValue);
 
             return outputArray;
@@ -107,22 +156,27 @@ namespace PublicStatusIndicator.IndicatorEngine
 
         private static int[] GenerateGausianPulse(int length, int peakForm, int offset)
         {
-            var tempplate = new int[length];
-            var temporaryMax = 0;
-            var idx = 0;
-            var midLen = tempplate.Length / 2;
-            for (var i = -midLen; i < midLen; i++)
+            int[] tempplate = new int[length];
+            int temporaryMax = 0;
+            int idx = 0;
+            int midLen = tempplate.Length / 2;
+            for (int i = -midLen; i < midLen; i++)
             {
                 tempplate[idx] = (int) (Math.Exp(-Math.Pow(peakForm * i / midLen, 2)) * byte.MaxValue) + offset;
                 temporaryMax = Math.Max(temporaryMax, tempplate[idx]);
                 idx++;
             }
             // Gleichverteilung auf Byte normieren
-            for (var i = 0; i < tempplate.Length; i++)
+            for (int i = 0; i < tempplate.Length; i++)
                 tempplate[i] = tempplate[i] * byte.MaxValue / temporaryMax;
 
             return tempplate;
         }
+
+
+        private int _fadingCnt;
+        private EngineState _fadingState;
+        private EngineState _lastState = EngineState.Blank;
 
         public Color[] EffectAccordingToState(EngineState currentState)
         {
@@ -134,15 +188,15 @@ namespace PublicStatusIndicator.IndicatorEngine
                 ResetEffekt(currentState);
             }
 
-            var ringColors1 = GenerateNewImage(currentState);
+            Color[] ringColors1 = GenerateNewImage(currentState);
 
             if (_fadingCnt > 0)
             {
                 _fadingCnt--;
-                var ringColors2 = GenerateNewImage(_fadingState);
+                Color[] ringColors2 = GenerateNewImage(_fadingState);
 
-                var onfadingCnt = FadingStart - _fadingCnt;
-                for (var i = 0; i < _virtualRing.Length; i++)
+                int onfadingCnt = FadingStart - _fadingCnt;
+                for (int i = 0; i < _virtualRing.Length; i++)
                 {
                     _virtualRing[i].R = (byte) ((ringColors1[i].R * onfadingCnt + ringColors2[i].R * _fadingCnt) / FadingStart);
                     _virtualRing[i].G = (byte) ((ringColors1[i].G * onfadingCnt + ringColors2[i].G * _fadingCnt) / FadingStart);
@@ -151,7 +205,7 @@ namespace PublicStatusIndicator.IndicatorEngine
             }
             else
             {
-                for (var i = 0; i < _virtualRing.Length; i++)
+                for (int i = 0; i < _virtualRing.Length; i++)
                     _virtualRing[i] = ringColors1[i];
             }
             return _virtualRing;
@@ -159,18 +213,18 @@ namespace PublicStatusIndicator.IndicatorEngine
 
         private Color[] GenerateNewImage(EngineState state)
         {
-            var colorSeries = new Color[0];
+            Color[] colorSeries = new Color[0];
             switch (state)
             {
                 case EngineState.Blank:
                     colorSeries = new Color[_virtualRing.Length];
-                    for (var i = 0; i < colorSeries.Length; i++)
-                        colorSeries[i] = Color.FromArgb(0xFF, 0x00, 0x00, 0x00);
+                    for (int i = 0; i < colorSeries.Length; i++)
+                        colorSeries[i] = Color.FromArgb(MaxBrighness, 0x00, 0x00, 0x00);
                     break;
                 case EngineState.Idle:
                     colorSeries = new Color[_virtualRing.Length];
-                    for (var i = 0; i < colorSeries.Length; i++)
-                        colorSeries[i] = Color.FromArgb(0xFF, 0x02, 0x02, 0x02);
+                    for (int i = 0; i < colorSeries.Length; i++)
+                        colorSeries[i] = Color.FromArgb(MaxBrighness, 0x02, 0x02, 0x02);
                     break;
                 case EngineState.Progress:
                     colorSeries = _virPrcsEffect.RotateStep();
@@ -179,10 +233,10 @@ namespace PublicStatusIndicator.IndicatorEngine
                     colorSeries = _virBadEffect.PulseStep();
                     break;
                 case EngineState.Unstable:
-                    colorSeries = _virGoodEffect.PulseStep();
+                    colorSeries = _virUnstabelEffect.PulseStep();
                     break;
                 case EngineState.Stable:
-                    colorSeries = _virGoodEffect.PulseStep();
+                    colorSeries = _virStabelEffect.PulseStep();
                     break;
             }
 
@@ -197,7 +251,7 @@ namespace PublicStatusIndicator.IndicatorEngine
                     _virPrcsEffect.ResetIndex();
                     break;
                 case EngineState.Stable:
-                    _virGoodEffect.ResetIndex();
+                    _virStabelEffect.ResetIndex();
                     break;
                 case EngineState.Bad:
                     _virBadEffect.ResetIndex();
@@ -234,7 +288,7 @@ namespace PublicStatusIndicator.IndicatorEngine
             {EngineState.Idle,      Color.FromArgb(0xFF, 0x08, 0x08, 0x08)},
             {EngineState.Progress,  Color.FromArgb(0xFF, 0x40, 0x40, 0x00)},
             {EngineState.Bad,       Color.FromArgb(0xFF, 0x80, 0x00, 0x00)},
-            {EngineState.Unstable,  Color.FromArgb(0xFF, 0x20, 0x60, 0x00)},
+            {EngineState.Unstable,  Color.FromArgb(0xFF, 0x40, 0x60, 0x00)},
             {EngineState.Stable,    Color.FromArgb(0xFF, 0x00, 0x80, 0x00)},
         };
     }

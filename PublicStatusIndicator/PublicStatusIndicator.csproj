@@ -105,6 +105,7 @@
     <Compile Include="GUI_Elements\Settings.xaml.cs">
       <DependentUpon>Settings.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IncrementalEncoder.cs" />
     <Compile Include="IndicatorEngine\Effect.cs" />
     <Compile Include="IndicatorEngine\PulseEffect.cs" />
     <Compile Include="IndicatorEngine\RotateEffect.cs" />

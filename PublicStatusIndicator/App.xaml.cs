@@ -17,6 +17,8 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.System.Threading;
 
+
+
 // To use the Web-Server
 using PublicStatusIndicator.Webserver;
 using PublicStatusIndicator.ApiController;
@@ -38,10 +40,10 @@ namespace PublicStatusIndicator
 
         Frame rootFrame = Window.Current.Content as Frame;
         LED_Strip _ledStrip;
+        IncrementalEncoder DirPreset;
 
         public EngineState _state { get; set; }
         public DispatcherTimer RefreshTimer { get; set; }
-
 
         public App()
         {
@@ -53,10 +55,26 @@ namespace PublicStatusIndicator
 
             InitWebserver();
 
+            DirPreset = new IncrementalEncoder(LEDSTRIP_LEN);
+            DirPreset.OnIncrement += DirPreset_OnIncrementCB;
+            DirPreset.OnSwitchPressed += DirPreset_OnSwitchPressedCB;
 
             RefreshTimer = new DispatcherTimer();
             RefreshTimer.Interval = TimeSpan.FromMilliseconds(MS_TICK);
             RefreshTimer.Tick += LED_Refresh_Tick;
+
+            DirPreset.StartSampling();
+
+        }
+
+        private void DirPreset_OnSwitchPressedCB()
+        {
+            _ledStrip.BlankAllLEDs();
+        }
+
+        private void DirPreset_OnIncrementCB(int pos)
+        {
+            _ledStrip.SetSingleLED(pos);
         }
 
         private void InitWebserver()

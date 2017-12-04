@@ -44,6 +44,17 @@ namespace PublicStatusIndicator
             _state = newState;
         }
 
+        public void SetSingleLED(int num) // @todo ggf. löschen
+        {
+            _leDstrip.ResetLEDs();
+            _leDstrip.SetLED(num, new RGBValue(0xFF, 0, 0, 0xFF));
+            _leDstrip.UpdateLEDs();
+        }
+
+        public void BlankAllLEDs()
+        {
+            _leDstrip.BlankLEDs();
+        }
 
         private async void InitHardware()
         {
@@ -323,7 +334,7 @@ namespace PublicStatusIndicator
         /// <summary>
         /// RGB-LED-settings for color channels and drive current for single RGB-LED
         /// </summary>
-        public struct RGBset
+        public class RGBset
         {
             // Each Color Value is 32 bit Value with following structure:
             //  II BB GG RR

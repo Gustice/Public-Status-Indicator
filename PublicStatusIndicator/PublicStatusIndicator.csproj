@@ -106,12 +106,18 @@
       <DependentUpon>Settings.xaml</DependentUpon>
     </Compile>
     <Compile Include="IncrementalEncoder.cs" />
-    <Compile Include="IndicatorEngine\Effect.cs" />
-    <Compile Include="IndicatorEngine\PulseEffect.cs" />
-    <Compile Include="IndicatorEngine\RotateEffect.cs" />
+    <Compile Include="IndicatorEngine\Effects\Effect_Memory.cs" />
+    <Compile Include="IndicatorEngine\Effects\PulseEffect.cs" />
+    <Compile Include="IndicatorEngine\Effects\RotateEffect.cs" />
+    <Compile Include="IndicatorEngine\EngineDefines.cs" />
     <Compile Include="IndicatorEngine\StatusIndicator.cs" />
-    <Compile Include="LED_Strip\LED_Defines.cs" />
+    <Compile Include="LED_Strip\BaseModels\GenreicLEDslave.cs" />
+    <Compile Include="LED_Strip\BaseModels\LEDdriverSpecificDefinitions.cs" />
+    <Compile Include="LED_Strip\BaseModels\LED_Defines.cs" />
+    <Compile Include="LED_Strip\LED_APA102.cs" />
     <Compile Include="LED_Strip\LED_Strip.cs" />
+    <Compile Include="LED_Strip\BaseModels\RaspiMultiSlave.cs" />
+    <Compile Include="LED_Strip\BaseModels\SPIHardwareConstrains.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>

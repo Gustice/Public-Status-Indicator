@@ -26,23 +26,26 @@ namespace PublicStatusIndicator.IndicatorEngine
         private readonly PulseEffect _virUnstabelEffect;
         private readonly RotateEffect _virPrcsEffect;
 
-        int virtualLenght;
+        int _virtualLenght;
+        int _virtualPulselength;
 
         public byte MaxBrighness { get; set; } = 0xFF;
 
-        public StatusIndicator(int targetCnt, int smoothFactor)
+        public StatusIndicator(int targetCnt, int smoothFactor, int pulseDuration)
         {
-            virtualLenght = targetCnt * smoothFactor;
-            _virtualRing = new Color[targetCnt];
-            _processTemplate = new Color[virtualLenght];
-            _stableTemplate = new Color[virtualLenght];
-            _unstableTemplate = new Color[virtualLenght];
-            _badTemplate = new Color[virtualLenght];
+            _virtualLenght = targetCnt * smoothFactor;
+            _virtualPulselength = pulseDuration;
 
-            InitPulse(virtualLenght, ref _processTemplate);
-            InitPulsePause(virtualLenght, ref _stableTemplate);
-            InitColoredPulsesPause(virtualLenght, ref _unstableTemplate);
-            InitPulsesPause(virtualLenght, ref _badTemplate);
+            _virtualRing = new Color[targetCnt];
+            _processTemplate = new Color[_virtualLenght];
+            _stableTemplate = new Color[_virtualLenght];
+            _unstableTemplate = new Color[_virtualLenght];
+            _badTemplate = new Color[_virtualLenght];
+
+            InitPulse(_virtualLenght, ref _processTemplate);
+            InitPulsePause(_virtualPulselength, ref _stableTemplate);
+            InitColoredPulsesPause(_virtualPulselength, ref _unstableTemplate);
+            InitPulsesPause(_virtualPulselength, ref _badTemplate);
 
             _virPrcsEffect = new RotateEffect(_processTemplate, _virtualRing);
             _virStabelEffect = new PulseEffect(_stableTemplate, _virtualRing);
@@ -260,38 +263,8 @@ namespace PublicStatusIndicator.IndicatorEngine
         }
     }
 
-    public enum EngineState
+    public class IndicatorConfig
     {
-        Blank,
-        Idle,
-        Progress,
-        Bad,
-        Unstable,
-        Stable,
+        /// @todo 
     }
-
-    public class EngineDefines
-    {
-        public static readonly Dictionary<EngineState, string> StateOutputs = new Dictionary<EngineState, string>
-        {
-            {EngineState.Blank, "Blank"},
-            {EngineState.Idle, "Idle"},
-            {EngineState.Progress, "Progress"},
-            {EngineState.Bad, "BAD"},
-            {EngineState.Unstable, "Unstable"},
-            {EngineState.Stable, "Stable"},
-        };
-
-        public static readonly Dictionary<EngineState, Color> StateColors = new Dictionary<EngineState, Color>
-        {
-            {EngineState.Blank,     Color.FromArgb(0xFF, 0x00, 0x00, 0x00)},
-            {EngineState.Idle,      Color.FromArgb(0xFF, 0x08, 0x08, 0x08)},
-            {EngineState.Progress,  Color.FromArgb(0xFF, 0x40, 0x40, 0x00)},
-            {EngineState.Bad,       Color.FromArgb(0xFF, 0x80, 0x00, 0x00)},
-            {EngineState.Unstable,  Color.FromArgb(0xFF, 0x40, 0x60, 0x00)},
-            {EngineState.Stable,    Color.FromArgb(0xFF, 0x00, 0x80, 0x00)},
-        };
-    }
-
-
 }

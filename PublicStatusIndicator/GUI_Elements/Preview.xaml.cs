@@ -58,7 +58,7 @@ namespace PublicStatusIndicator.GUI_Elements
         public Preview(MainPage parent)
         {
             _virtualRing = new Color[VIRTUAL_LEN];
-            _virtualIndicator = new StatusIndicator(VIRTUAL_LEN, VIRTUAL_LEN * 8);
+            _virtualIndicator = new StatusIndicator(VIRTUAL_LEN, 8, 50);
 
             ParentPage = parent;
             _displayRing = new ObersableBrushes();

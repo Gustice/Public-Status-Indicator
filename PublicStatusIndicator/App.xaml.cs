@@ -35,8 +35,11 @@ namespace PublicStatusIndicator
     /// </summary>
     sealed partial class App : Application
     {
-        private const int LEDSTRIP_LEN = 20;
-        private const int MS_TICK = 50;
+        private const int MS_TICK = 40;                 // -> Refresh-Frequency 25 per second
+
+        private const int LEDSTRIP_LEN = 24;
+        private const int LED_ROTATE_SMOOTHNESS  = 3;   // Hence about 1 turn in three seconds
+        private const int LED_PULSE_VALUES = 4*1000/MS_TICK;     
 
         Frame rootFrame = Window.Current.Content as Frame;
         LED_Strip _ledStrip;
@@ -45,18 +48,20 @@ namespace PublicStatusIndicator
         public EngineState _state { get; set; }
         public DispatcherTimer RefreshTimer { get; set; }
 
+
+
         public App()
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
 
-            _ledStrip = new LED_Strip(LEDSTRIP_LEN);
+            _ledStrip = new LED_Strip(LEDSTRIP_LEN, LED_ROTATE_SMOOTHNESS, LED_PULSE_VALUES);
             _state = EngineState.Blank;
 
             InitWebserver();
 
             DirPreset = new IncrementalEncoder(LEDSTRIP_LEN);
-            DirPreset.OnIncrement += DirPreset_OnIncrementCB;
+            DirPreset.OnIncrement += DirPreset_OnEncoderStepCB;
             DirPreset.OnSwitchPressed += DirPreset_OnSwitchPressedCB;
 
             RefreshTimer = new DispatcherTimer();
@@ -71,10 +76,10 @@ namespace PublicStatusIndicator
         {
             _ledStrip.BlankAllLEDs();
         }
-
-        private void DirPreset_OnIncrementCB(int pos)
+       
+        private void DirPreset_OnEncoderStepCB(int pos)
         {
-            _ledStrip.SetSingleLED(pos);
+            _ledStrip.SetEyePosition(pos);
         }
 
         private void InitWebserver()

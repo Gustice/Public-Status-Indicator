@@ -278,6 +278,27 @@
           "lib/dotnet/Microsoft.Win32.Primitives.dll": {}
         }
       },
+      "OxyPlot.Core/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        }
+      },
+      "OxyPlot.Windows/1.0.0": {
+        "type": "package",
+        "dependencies": {
+          "OxyPlot.Core": "[1.0.0]"
+        },
+        "compile": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        },
+        "runtime": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        }
+      },
       "System.AppContext/4.0.0": {
         "type": "package",
         "dependencies": {
@@ -2104,6 +2125,27 @@
           "lib/dotnet/Microsoft.Win32.Primitives.dll": {}
         }
       },
+      "OxyPlot.Core/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        }
+      },
+      "OxyPlot.Windows/1.0.0": {
+        "type": "package",
+        "dependencies": {
+          "OxyPlot.Core": "[1.0.0]"
+        },
+        "compile": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        },
+        "runtime": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        }
+      },
       "runtime.any.System.Private.DataContractSerialization/4.1.0": {
         "type": "package",
         "dependencies": {
@@ -3845,6 +3887,27 @@
           "lib/dotnet/Microsoft.Win32.Primitives.dll": {}
         }
       },
+      "OxyPlot.Core/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        }
+      },
+      "OxyPlot.Windows/1.0.0": {
+        "type": "package",
+        "dependencies": {
+          "OxyPlot.Core": "[1.0.0]"
+        },
+        "compile": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        },
+        "runtime": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        }
+      },
       "runtime.aot.System.Private.DataContractSerialization/4.1.0": {
         "type": "package",
         "dependencies": {
@@ -5551,6 +5614,27 @@
         },
         "runtime": {
           "lib/dotnet/Microsoft.Win32.Primitives.dll": {}
+        }
+      },
+      "OxyPlot.Core/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        }
+      },
+      "OxyPlot.Windows/1.0.0": {
+        "type": "package",
+        "dependencies": {
+          "OxyPlot.Core": "[1.0.0]"
+        },
+        "compile": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        },
+        "runtime": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
         }
       },
       "runtime.any.System.Private.DataContractSerialization/4.1.0": {
@@ -7297,6 +7381,27 @@
           "lib/dotnet/Microsoft.Win32.Primitives.dll": {}
         }
       },
+      "OxyPlot.Core/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        }
+      },
+      "OxyPlot.Windows/1.0.0": {
+        "type": "package",
+        "dependencies": {
+          "OxyPlot.Core": "[1.0.0]"
+        },
+        "compile": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        },
+        "runtime": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        }
+      },
       "runtime.aot.System.Private.DataContractSerialization/4.1.0": {
         "type": "package",
         "dependencies": {
@@ -9003,6 +9108,27 @@
         },
         "runtime": {
           "lib/dotnet/Microsoft.Win32.Primitives.dll": {}
+        }
+      },
+      "OxyPlot.Core/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        }
+      },
+      "OxyPlot.Windows/1.0.0": {
+        "type": "package",
+        "dependencies": {
+          "OxyPlot.Core": "[1.0.0]"
+        },
+        "compile": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        },
+        "runtime": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
         }
       },
       "runtime.any.System.Private.DataContractSerialization/4.1.0": {
@@ -10747,6 +10873,27 @@
         },
         "runtime": {
           "lib/dotnet/Microsoft.Win32.Primitives.dll": {}
+        }
+      },
+      "OxyPlot.Core/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll": {}
+        }
+      },
+      "OxyPlot.Windows/1.0.0": {
+        "type": "package",
+        "dependencies": {
+          "OxyPlot.Core": "[1.0.0]"
+        },
+        "compile": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
+        },
+        "runtime": {
+          "lib/uap10.0/OxyPlot.Windows.dll": {}
         }
       },
       "runtime.aot.System.Private.DataContractSerialization/4.1.0": {
@@ -12810,6 +12957,59 @@
         "ref/net46/Microsoft.Win32.Primitives.dll",
         "ref/xamarinios10/_._",
         "ref/xamarinmac20/_._"
+      ]
+    },
+    "OxyPlot.Core/1.0.0": {
+      "sha512": "4CdN5a7xg7rdXAn0MqofQQV7Y2mt0e8nch3Zko5XSien2eTZo+lkkX9IjMhipMiwu2/SQnggS3ZMzvhEThRnIw==",
+      "type": "package",
+      "files": [
+        "AUTHORS",
+        "CHANGELOG.md",
+        "CONTRIBUTORS",
+        "LICENSE",
+        "OxyPlot.Core.1.0.0.nupkg.sha512",
+        "OxyPlot.Core.nuspec",
+        "README.md",
+        "lib/net40-client/OxyPlot.XML",
+        "lib/net40-client/OxyPlot.dll",
+        "lib/net40-client/OxyPlot.pdb",
+        "lib/net40/OxyPlot.XML",
+        "lib/net40/OxyPlot.dll",
+        "lib/net40/OxyPlot.pdb",
+        "lib/net45/OxyPlot.dll",
+        "lib/net45/OxyPlot.pdb",
+        "lib/net45/OxyPlot.xml",
+        "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.dll",
+        "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.pdb",
+        "lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1+Xamarin.iOS10/OxyPlot.xml",
+        "lib/sl5/OxyPlot.XML",
+        "lib/sl5/OxyPlot.dll",
+        "lib/sl5/OxyPlot.pdb"
+      ]
+    },
+    "OxyPlot.Windows/1.0.0": {
+      "sha512": "XPhP/tr2VeLdLUBql55iLhaOR3srj3fETzcKpUQ93qfE+gualH7ha3UVnGhwbAvBPgwILj2HtUQbxJA2IB8phA==",
+      "type": "package",
+      "files": [
+        "AUTHORS",
+        "CHANGELOG.md",
+        "CONTRIBUTORS",
+        "LICENSE",
+        "OxyPlot.Windows.1.0.0.nupkg.sha512",
+        "OxyPlot.Windows.nuspec",
+        "README.md",
+        "lib/portable-windows8+wpa81/OxyPlot.Windows.dll",
+        "lib/portable-windows8+wpa81/OxyPlot.Windows.pdb",
+        "lib/portable-windows8+wpa81/OxyPlot.Windows.pri",
+        "lib/portable-windows8+wpa81/OxyPlot.Windows.xml",
+        "lib/portable-windows8+wpa81/OxyPlot.Windows/OxyPlot.Windows.xr.xml",
+        "lib/portable-windows8+wpa81/OxyPlot.Windows/Themes/Generic.xbf",
+        "lib/uap10.0/OxyPlot.Windows.dll",
+        "lib/uap10.0/OxyPlot.Windows.pdb",
+        "lib/uap10.0/OxyPlot.Windows.pri",
+        "lib/uap10.0/OxyPlot.Windows/OxyPlot.Windows.xr.xml",
+        "lib/uap10.0/OxyPlot.Windows/Properties/OxyPlot.Windows10.rd.xml",
+        "lib/uap10.0/OxyPlot.Windows/Themes/Generic.xbf"
       ]
     },
     "runtime.any.System.Private.DataContractSerialization/4.1.0": {
@@ -15497,7 +15697,9 @@
   },
   "projectFileDependencyGroups": {
     "": [
-      "Microsoft.NETCore.UniversalWindowsPlatform >= 5.1.0"
+      "Microsoft.NETCore.UniversalWindowsPlatform >= 5.1.0",
+      "OxyPlot.Core >= 1.0.0",
+      "OxyPlot.Windows >= 1.0.0"
     ],
     "UAP,Version=v10.0": []
   }

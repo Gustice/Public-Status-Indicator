@@ -5,11 +5,26 @@
     xmlns:local="using:PublicStatusIndicator.GUI_Elements"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:oxy="using:OxyPlot.Windows"
     mc:Ignorable="d"
     d:DesignHeight="480"
     d:DesignWidth="480">
 
     <Grid>
-        <TextBlock Text="Test" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="40"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="10" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            <oxy:PlotView Model="{Binding RotatePlot}" />
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="10" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            <oxy:PlotView Model="{Binding PulsePlot}" />
+        </Grid>
+
+
     </Grid>
 </UserControl>

@@ -9,16 +9,17 @@ namespace PublicStatusIndicator.IndicatorEngine
         private const int FadingStart = 10;
 
         private const byte StartSeq = 0xE0;
-        private const byte Brightness = 10;
+        private const byte OverallBrightness = 10;
+        private const byte OffsetBrightness = byte.MaxValue / 6;
 
-        private const byte CommonAlpha = StartSeq & Brightness;
+        private const byte CommonAlpha = StartSeq & OverallBrightness;
 
         private readonly Color[] _badTemplate;
         private readonly Color[] _unstableTemplate;
         private readonly Color[] _stableTemplate;
         private readonly Color[] _processTemplate;
 
-        private readonly Color[] _virtualRing;
+        private readonly Color[] _physicallRing;
 
 
         private readonly PulseEffect _virBadEffect;
@@ -31,103 +32,148 @@ namespace PublicStatusIndicator.IndicatorEngine
 
         public byte MaxBrighness { get; set; } = 0xFF;
 
-        public StatusIndicator(int targetCnt, int smoothFactor, int pulseDuration)
+        public StatusIndicator(IndicatorConfig configuration)
+        //public StatusIndicator(int targetCnt, int smoothFactor, int pulseDuration)
         {
-            _virtualLenght = targetCnt * smoothFactor;
-            _virtualPulselength = pulseDuration;
+            int targetCnt = configuration.TargetPixels;
+            _virtualLenght = targetCnt * configuration.RotateSmoothFactor;
+            _virtualPulselength = configuration.PulseImages;
 
-            _virtualRing = new Color[targetCnt];
+            _physicallRing = new Color[targetCnt];
             _processTemplate = new Color[_virtualLenght];
-            _stableTemplate = new Color[_virtualLenght];
-            _unstableTemplate = new Color[_virtualLenght];
-            _badTemplate = new Color[_virtualLenght];
+            _stableTemplate = new Color[_virtualPulselength];
+            _unstableTemplate = new Color[_virtualPulselength];
+            _badTemplate = new Color[_virtualPulselength];
 
-            InitPulse(_virtualLenght, ref _processTemplate);
-            InitPulsePause(_virtualPulselength, ref _stableTemplate);
-            InitColoredPulsesPause(_virtualPulselength, ref _unstableTemplate);
-            InitPulsesPause(_virtualPulselength, ref _badTemplate);
+            InitRotatingPulse(_virtualLenght, ref _processTemplate);
+            InitStablePulse(_virtualPulselength, ref _stableTemplate);
+            InitUnstablePulse(_virtualPulselength, ref _unstableTemplate);
+            InitBadPause(_virtualPulselength, ref _badTemplate);
 
-            _virPrcsEffect = new RotateEffect(_processTemplate, _virtualRing);
-            _virStabelEffect = new PulseEffect(_stableTemplate, _virtualRing);
-            _virUnstabelEffect = new PulseEffect(_unstableTemplate, _virtualRing);
-            _virBadEffect = new PulseEffect(_badTemplate, _virtualRing);
+            _virPrcsEffect = new RotateEffect(_processTemplate, _physicallRing);
+            _virStabelEffect = new PulseEffect(_stableTemplate, _physicallRing);
+            _virUnstabelEffect = new PulseEffect(_unstableTemplate, _physicallRing);
+            _virBadEffect = new PulseEffect(_badTemplate, _physicallRing);
         }
 
-        private void InitPulse(int length, ref Color[] pulseTemp)
+        private void InitRotatingPulse(int length, ref Color[] pulseTemp)
         {
             int[] p = new int[length];
-            int offsetBrightnes = byte.MaxValue / 4;
 
             // Erzeuge einen zentralen Puls für den Process
-            p = GenerateGausianPulse(p.Length, 10, offsetBrightnes);
+            p = GenerateGausianPulse(p.Length, 10, OffsetBrightness);
             for (int i = 0; i < length; i++)
                 pulseTemp[i] = Color.FromArgb(MaxBrighness, (byte) p[i], (byte) (p[i]*12/16), 0x00);
         }
 
-        private void InitPulsePause(int length, ref Color[] pulseTemp)
+        /// <summary>
+        /// Generates pulse to display stabel-state.
+        /// The effect should appear as "brathing" green signal
+        /// </summary>
+        /// <param name="length"></param>
+        /// <param name="pulseTemp"></param>
+        private void InitStablePulse(int length, ref Color[] pulseTemp)
         {
+            int i = 0;
             int[] p = new int[length];
-            int offsetBrightnes = byte.MaxValue / 4;
 
-            // Zeuge einen erkennbaren Puls für den Good-Status 
-            int[] tempG = GenerateGausianPulse(p.Length / 2, 3, offsetBrightnes);
-            for (int i = 0; i < tempG.Length; i++)
+            int[] tempG = GenerateGausianPulse(p.Length / 2, 3, OffsetBrightness);
+            // Generate "brathing pulse"
+            for (; i < tempG.Length; i++)
                 p[i] = tempG[i];
-            for (int i = tempG.Length; i < p.Length; i++)
-                p[i] = offsetBrightnes;
-            for (int i = 0; i < length; i++)
+
+            // Fill remaining with offset brightness
+            for (; i < p.Length; i++)
+                p[i] = OffsetBrightness;
+
+            // Transform to green pulse
+            for (i = 0; i < length; i++)
                 pulseTemp[i] = Color.FromArgb(MaxBrighness, 0x00, (byte)p[i], 0x00);
         }
 
-        private void InitPulsesPause(int length, ref Color[] pulseTemp)
+        /// <summary>
+        /// Generates pulse to display bad-state.
+        /// The effect should appear as three "nervouse" pulses followed by a longer pause
+        /// </summary>
+        /// <param name="length"></param>
+        /// <param name="pulseTemp"></param>
+        private void InitBadPause(int length, ref Color[] pulseTemp)
         {
+            int i = 0;
             int[] p = new int[length];
-            int offsetBrightnes = byte.MaxValue / 4;
 
-            // Erzuge drei erkennbaren Pulse für den Bad-Status 
-            int[] tempB = GenerateGausianPulse(p.Length / 6, 3, offsetBrightnes);
-            for (int i = 0; i < tempB.Length; i++)
+            int[] tempB = GenerateGausianPulse(p.Length / 6, 3, OffsetBrightness);
+
+            // Generate n pulses
+            for (int np = 0; np < 3; np++)
             {
-                p[i] = tempB[i];
-                p[i + tempB.Length] = tempB[i];
-                p[i + 2 * tempB.Length] = tempB[i];
+                int j = 0;
+                int next_i = i + tempB.Length;
+                for (; i < next_i; i++)
+                {
+                    p[i] = tempB[j];
+                    j++;
+                }
             }
-            for (int i = tempB.Length * 3; i < p.Length; i++)
-                p[i] = offsetBrightnes;
-            for (int i = 0; i < length; i++)
+
+            // Fill remaining with offset brightness
+            for (; i < p.Length; i++)
+                p[i] = OffsetBrightness;
+
+            // Transform to red pulse
+            for (i = 0; i < length; i++)
                 pulseTemp[i] = Color.FromArgb(MaxBrighness, (byte)p[i], 0x00, 0x00);
         }
 
-        private void InitColoredPulsesPause(int length, ref Color[] pulseTemp)
+        private void InitUnstablePulse(int length, ref Color[] pulseTemp)
         {
+            int i = 0;
             int[] p1 = new int[length];
             int[] p2 = new int[length];
 
-            int offsetBrightnes = byte.MaxValue / 4;
+            int[] tempP1 = GenerateGausianPulse(p1.Length / 4, 3, OffsetBrightness);
 
-            // Erzuge drei erkennbaren Pulse für den fast Good-Status 
-            int[] tempP1 = GenerateGausianPulse(p1.Length / 4, 3, offsetBrightnes);
-            for (int i = 0; i < tempP1.Length; i++)
+
+            // Generate n pulses
+            for (int np = 0; np < 2; np++)
             {
-                p1[i] = tempP1[i];
-                p1[i + tempP1.Length] = tempP1[i];
+                int next_i = i + tempP1.Length;
+                int j = 0;
+                for (; i < next_i; i++)
+                {
+                    p1[i] = tempP1[j];
+                    j++;
+                }
             }
-            for (int i = tempP1.Length * 2; i < p1.Length; i++)
-                p1[i] = offsetBrightnes;
 
-            for (int i = 0; i < length; i++)
+            // Fill remaining with offset brightness
+            for (; i < p1.Length; i++)
+                p1[i] = OffsetBrightness;
+
+
+            for (i = 0; i < p2.Length; i++)
                 p2[i] = 0;
 
             int[] tempP2 = GenerateGausianPulse(p1.Length / 4, 4, 0);
-            for (int i = 0; i < tempP2.Length; i++)
+
+            int k = 0;
+            for (i= tempP1.Length; i < tempP1.Length+ tempP2.Length; i++)
             {
-                p2[i + tempP2.Length] = tempP2[i];
+                p2[i] = tempP2[k];
+                k++;
             }
 
-            for (int i = 0; i < length; i++)
+            // Transform to two-colored Pulse
+            for (i = 0; i < length; i++)
                 pulseTemp[i] = Color.FromArgb(MaxBrighness, (byte)p2[i], (byte) (p1[i]*12/16), 0x00);
         }
 
+        /// <summary>
+        ///  Returns plotable grayscale waveforms of colored pulse waveforms
+        /// </summary>
+        /// <param name="processStateProfile"></param>
+        /// <param name="goodStateProfile"></param>
+        /// <param name="badStateProfile"></param>
         public void GetCurvesAsGrayValues(out byte[] processStateProfile, out byte[] goodStateProfile,
             out byte[] badStateProfile)
         {
@@ -136,6 +182,11 @@ namespace PublicStatusIndicator.IndicatorEngine
             badStateProfile = MakeGrayValuesToDataProfile(_badTemplate);
         }
 
+        /// <summary>
+        /// Transforms colored waveform to plotable (and normalized) graysscale waveform
+        /// </summary>
+        /// <param name="colorArray"></param>
+        /// <returns></returns>
         private static byte[] MakeGrayValuesToDataProfile(Color[] colorArray)
         {
             byte[] outputArray = new byte[colorArray.Length];
@@ -150,13 +201,22 @@ namespace PublicStatusIndicator.IndicatorEngine
                 grayArray[i] = grayArray[i] * colorArray[i].A / byte.MaxValue;
                 maxValue = Math.Max(maxValue, grayArray[i]);
             }
-            // Gleichverteilung auf Byte normieren
+            
+            // Normalize values
             for (int i = 0; i < grayArray.Length; i++)
                 outputArray[i] = (byte) (grayArray[i] * byte.MaxValue / maxValue);
 
             return outputArray;
         }
 
+        /// <summary>
+        /// Generates parametrized gausian pulse
+        /// Pulse is normalized to 100 %
+        /// </summary>
+        /// <param name="length">Data points for gausian pulse. Pulse is allways located in the centre</param>
+        /// <param name="peakForm">Concentration of pulse in the middle. Set to 2 for a flat curve and to 4 or higher for a more sharpe peak in the middle</param>
+        /// <param name="offset">Offset value for background-brightness</param>
+        /// <returns></returns>
         private static int[] GenerateGausianPulse(int length, int peakForm, int offset)
         {
             int[] tempplate = new int[length];
@@ -165,13 +225,13 @@ namespace PublicStatusIndicator.IndicatorEngine
             int midLen = tempplate.Length / 2;
             for (int i = -midLen; i < midLen; i++)
             {
-                tempplate[idx] = (int) (Math.Exp(-Math.Pow(peakForm * i / midLen, 2)) * byte.MaxValue) + offset;
+                tempplate[idx] = (int) (Math.Exp(-Math.Pow((float)peakForm * i / midLen, 2)) * byte.MaxValue);
                 temporaryMax = Math.Max(temporaryMax, tempplate[idx]);
                 idx++;
             }
             // Gleichverteilung auf Byte normieren
             for (int i = 0; i < tempplate.Length; i++)
-                tempplate[i] = tempplate[i] * byte.MaxValue / temporaryMax;
+                tempplate[i] = tempplate[i] * (byte.MaxValue - offset) / temporaryMax + offset;
 
             return tempplate;
         }
@@ -181,6 +241,12 @@ namespace PublicStatusIndicator.IndicatorEngine
         private EngineState _fadingState;
         private EngineState _lastState = EngineState.Blank;
 
+        /// <summary>
+        /// Generats following image to an appropriate state.
+        /// Handles also fading between on change condition.
+        /// </summary>
+        /// <param name="currentState"></param>
+        /// <returns></returns>
         public Color[] EffectAccordingToState(EngineState currentState)
         {
             if (currentState != _lastState)
@@ -188,7 +254,7 @@ namespace PublicStatusIndicator.IndicatorEngine
                 _fadingState = _lastState;
                 _lastState = currentState;
                 _fadingCnt = FadingStart;
-                ResetEffekt(currentState);
+                ResetEffect(currentState);
             }
 
             Color[] ringColors1 = GenerateNewImage(currentState);
@@ -199,33 +265,38 @@ namespace PublicStatusIndicator.IndicatorEngine
                 Color[] ringColors2 = GenerateNewImage(_fadingState);
 
                 int onfadingCnt = FadingStart - _fadingCnt;
-                for (int i = 0; i < _virtualRing.Length; i++)
+                for (int i = 0; i < _physicallRing.Length; i++)
                 {
-                    _virtualRing[i].R = (byte) ((ringColors1[i].R * onfadingCnt + ringColors2[i].R * _fadingCnt) / FadingStart);
-                    _virtualRing[i].G = (byte) ((ringColors1[i].G * onfadingCnt + ringColors2[i].G * _fadingCnt) / FadingStart);
-                    _virtualRing[i].B = (byte)((ringColors1[i].B * onfadingCnt + ringColors2[i].B * _fadingCnt) / FadingStart);
+                    _physicallRing[i].R = (byte) ((ringColors1[i].R * onfadingCnt + ringColors2[i].R * _fadingCnt) / FadingStart);
+                    _physicallRing[i].G = (byte) ((ringColors1[i].G * onfadingCnt + ringColors2[i].G * _fadingCnt) / FadingStart);
+                    _physicallRing[i].B = (byte)((ringColors1[i].B * onfadingCnt + ringColors2[i].B * _fadingCnt) / FadingStart);
                 }
             }
             else
             {
-                for (int i = 0; i < _virtualRing.Length; i++)
-                    _virtualRing[i] = ringColors1[i];
+                for (int i = 0; i < _physicallRing.Length; i++)
+                    _physicallRing[i] = ringColors1[i];
             }
-            return _virtualRing;
+            return _physicallRing;
         }
 
+        /// <summary>
+        /// Generats following image to an appropriate state.
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
         private Color[] GenerateNewImage(EngineState state)
         {
             Color[] colorSeries = new Color[0];
             switch (state)
             {
                 case EngineState.Blank:
-                    colorSeries = new Color[_virtualRing.Length];
+                    colorSeries = new Color[_physicallRing.Length];
                     for (int i = 0; i < colorSeries.Length; i++)
                         colorSeries[i] = Color.FromArgb(MaxBrighness, 0x00, 0x00, 0x00);
                     break;
                 case EngineState.Idle:
-                    colorSeries = new Color[_virtualRing.Length];
+                    colorSeries = new Color[_physicallRing.Length];
                     for (int i = 0; i < colorSeries.Length; i++)
                         colorSeries[i] = Color.FromArgb(MaxBrighness, 0x02, 0x02, 0x02);
                     break;
@@ -246,7 +317,12 @@ namespace PublicStatusIndicator.IndicatorEngine
             return colorSeries;
         }
 
-        private void ResetEffekt(EngineState state)
+        /// <summary>
+        /// Resets fading states after completion of changecondition. 
+        /// The reset makes shure that pulsed states are displayed from the beginning again wenn state is set again to appropriate state.
+        /// </summary>
+        /// <param name="state"></param>
+        private void ResetEffect(EngineState state)
         {
             switch (state)
             {
@@ -261,10 +337,48 @@ namespace PublicStatusIndicator.IndicatorEngine
                     break;
             }
         }
-    }
 
-    public class IndicatorConfig
-    {
-        /// @todo 
+        /// <summary>
+        /// return als colored templates for differend states
+        /// </summary>
+        /// <param name="process"></param>
+        /// <param name="bad"></param>
+        /// <param name="unstable"></param>
+        /// <param name="stable"></param>
+        public void GetAllTemplates(out Color[] process, out Color[] bad, out Color[] unstable, out Color[] stable )
+        {
+            process = _processTemplate;
+            bad = _badTemplate;
+            unstable = _unstableTemplate;
+            stable = _stableTemplate;
+        }
+
+        /// <summary>
+        /// Class for configuraion object to configurate the indicator engine. 
+        /// </summary>
+        public class IndicatorConfig
+        {
+            /// <summary>
+            /// Number of Pixels / LEDs / Lamps to display rotated ore pulsed effekts
+            /// </summary>
+            public int TargetPixels { get; set; }
+
+            /// <summary>
+            /// Faktor for intermediate states for rotated effekts
+            /// </summary>
+            public int RotateSmoothFactor { get; set; }
+
+            /// <summary>
+            /// Number of images to be displayed as pulsed effekt
+            /// </summary>
+            public int PulseImages { get; set; }
+
+            public IndicatorConfig (int pixels, int smoothfactor, int pulseLength)
+            {
+                TargetPixels = pixels;
+                RotateSmoothFactor = smoothfactor;
+                PulseImages = pulseLength;
+            }
+        }
     }
 }

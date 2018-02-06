@@ -16,8 +16,17 @@ namespace PublicStatusIndicator
     /// </summary>
     public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
+        #region HardCodedSettings
+        private const int VIRTUAL_LEN = 12;
+        private const int ROTATE_SMOOTHNESS = 3;
+        private const int PULSE_VALUES = 72;
+        #endregion
+
+        StatusIndicator.IndicatorConfig PreviewConfig;
+
         UserControl UC_ModePreview;
         UserControl UC_FormSettings;
+
 
         private UserControl _activePage;
         public UserControl ActivePage
@@ -30,8 +39,10 @@ namespace PublicStatusIndicator
 
         public MainPage()
         {
-            UC_ModePreview = new Preview(this);
-            UC_FormSettings = new Settings(this);
+            PreviewConfig = new StatusIndicator.IndicatorConfig(VIRTUAL_LEN, ROTATE_SMOOTHNESS, PULSE_VALUES);
+
+            UC_ModePreview = new Preview(this, PreviewConfig);
+            UC_FormSettings = new Settings(this, PreviewConfig);
             ActivePage = UC_ModePreview;
 
             InitializeComponent();

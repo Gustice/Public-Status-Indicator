@@ -38,8 +38,8 @@ namespace PublicStatusIndicator
         private const int MS_TICK = 40;                 // -> Refresh-Frequency 25 per second
 
         private const int LEDSTRIP_LEN = 24;
-        private const int LED_ROTATE_SMOOTHNESS  = 3;   // Hence about 1 turn in three seconds
-        private const int LED_PULSE_VALUES = 4*1000/MS_TICK;     
+        private const int LED_ROTATE_SMOOTHNESS  = 2;   // Rounds per second = 1000/40/24 
+        private const int LED_PULSE_VALUES = 3*1000/MS_TICK;     
 
         Frame rootFrame = Window.Current.Content as Frame;
         LED_Strip _ledStrip;

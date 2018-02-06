@@ -24,9 +24,6 @@ namespace PublicStatusIndicator.GUI_Elements
 {
     public sealed partial class Preview : UserControl, INotifyPropertyChanged
     {
-        #region HardCodedSettings
-        private const int VIRTUAL_LEN = 12;
-        #endregion
 
         public ObersableBrushes _displayRing { get; }
 
@@ -51,14 +48,10 @@ namespace PublicStatusIndicator.GUI_Elements
 
         private EngineState _state = EngineState.Idle;
 
-
-        public Preview()
+        public Preview(MainPage parent, StatusIndicator.IndicatorConfig config)
         {
-        }
-        public Preview(MainPage parent)
-        {
-            _virtualRing = new Color[VIRTUAL_LEN];
-            _virtualIndicator = new StatusIndicator(VIRTUAL_LEN, 8, 50);
+            _virtualRing = new Color[config.TargetPixels];
+            _virtualIndicator = new StatusIndicator(config);
 
             ParentPage = parent;
             _displayRing = new ObersableBrushes();

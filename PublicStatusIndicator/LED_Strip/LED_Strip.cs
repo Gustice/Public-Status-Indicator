@@ -46,8 +46,10 @@ namespace PublicStatusIndicator
             _smoothness = smothness;
             _pulsePeriode = pulsePeriode;
 
+            StatusIndicator.IndicatorConfig config = new StatusIndicator.IndicatorConfig(numPixels, smothness, pulsePeriode);
+
             InitHardware();
-            _ledIndicator = new StatusIndicator(_numPixels, _smoothness, _pulsePeriode);
+            _ledIndicator = new StatusIndicator(config);
             _ledIndicator.MaxBrighness = 0xF0;
             _rgBring = new Color[_numPixels];
 

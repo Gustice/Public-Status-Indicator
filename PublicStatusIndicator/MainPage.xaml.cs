@@ -106,6 +106,10 @@ namespace PublicStatusIndicator
                     newState = EngineState.Stable;
                     break;
 
+                case "testSauron":
+
+                    break;
+
                 case "showProfiles":
                     if (dMode == DisplayMode.Preview)
                     {

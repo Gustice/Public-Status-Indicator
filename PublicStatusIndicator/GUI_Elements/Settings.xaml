@@ -17,11 +17,11 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="10" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid Grid.Row="0" Margin="30,10">
             <oxy:PlotView Model="{Binding RotatePlot}" />
         </Grid>
 
-        <Grid Grid.Row="1" Margin="10" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid Grid.Row="1" Margin="30,10">
             <oxy:PlotView Model="{Binding PulsePlot}" />
         </Grid>
 

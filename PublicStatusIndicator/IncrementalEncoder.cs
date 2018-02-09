@@ -9,8 +9,20 @@ namespace PublicStatusIndicator
 
     internal class IncrementalEncoder
     {
+        // Hardcoded configuration
+        // Make shure that the perepheral device is connected to the appropriate ports
+        #region HardCoded               
+        const int SAMPLE_TIME = 10;
+        const int APIN = 2;
+        const int BPIN = 3;
+        const int SWPIN = 4;
+        #endregion
+
         private int _value;
 
+        /// <summary>
+        /// Output-value either adjusted to encoder resolution or to desired maximum output value.
+        /// </summary>
         public int Value
         {
             get { return _value; }
@@ -31,16 +43,11 @@ namespace PublicStatusIndicator
             }
         }
 
-        public int ErrorCntr { get; set; }
+        public int LostIncrements_Cnt { get; set; }
 
         public int Resolution { get; set; }
 
         GpioController _pinController;
-
-        const int SAMPLE_TIME = 10;
-        const int APIN = 2;
-        const int BPIN = 3;
-        const int SWPIN = 4;
 
         GpioPin _AChannel; 
         GpioPin _BChannel;
@@ -48,6 +55,10 @@ namespace PublicStatusIndicator
 
         private DispatcherTimer Sampler;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="resolution">Resolution of used encoder or desired output signal</param>
         public IncrementalEncoder(int resolution)
         {
             Resolution = resolution;
@@ -61,17 +72,28 @@ namespace PublicStatusIndicator
         internal event IncrementPassed OnIncrement;
         internal event SwitchPressed OnSwitchPressed;
 
+        /// <summary>
+        /// Abstraction method to start sampling
+        /// </summary>
         public void StartSampling()
         {
             Sampler.Start();
         }
 
+        /// <summary>
+        /// Abstraction method to stop sampling
+        /// </summary>
         public void StopSampling()
         {
             Sampler.Stop();
         }
 
         int lastSwitch;
+        /// <summary>
+        /// Sample timer to evaluate encoder-signal and switch
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Timer_Tick(object sender, object e)
         {
             EvalEncoderIncrement();
@@ -86,6 +108,11 @@ namespace PublicStatusIndicator
         }
 
         int lastStep;
+        /// <summary>
+        /// Evaluates assoicated ports in order to find whether the encoder was moved or not in comparison to last invoke.
+        /// If both signals where changed at once the counter for lost increments is incremented.
+        /// </summary>
+        /// <remarks> Note thate this method has to be invoked periodically</remarks>
         private void EvalEncoderIncrement()
         {
             int thisStep = ((int)_AChannel.Read()) | ((int)_BChannel.Read() << 1);
@@ -120,7 +147,7 @@ namespace PublicStatusIndicator
                 case 0x6: // 01 10
                 case 0x9: // 10 01
                 case 0xC: // 11 00
-                    ErrorCntr++;
+                    LostIncrements_Cnt++;
                     break;
 
                 default:
@@ -130,6 +157,9 @@ namespace PublicStatusIndicator
             lastStep = thisStep & (0x3);
         }
 
+        /// <summary>
+        /// Initializes digital ports according to hard-coded configuration
+        /// </summary>
         private void InitGPIO()
         {
             _pinController = GpioController.GetDefault();
@@ -144,7 +174,7 @@ namespace PublicStatusIndicator
             }
             catch (System.Exception)
             {
-                throw new System.Exception("There appearts to be a GPIO-Port missing");
+                throw new System.Exception("There appearts to be a GPIO-Port missing or is already used");
             }
         }
     }

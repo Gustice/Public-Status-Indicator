@@ -17,6 +17,7 @@ using OxyPlot;
 using OxyPlot.Series;
 using PublicStatusIndicator.IndicatorEngine;
 using Windows.UI;
+using OxyPlot.Axes;
 
 
 
@@ -29,7 +30,14 @@ namespace PublicStatusIndicator.GUI_Elements
         MainPage ParentPage;
         private readonly StatusIndicator _virtualIndicator;
 
+        /// <summary>
+        /// Plot model to display rotated effects
+        /// </summary>
         public PlotModel RotatePlot { get; set;}
+
+        /// <summary>
+        /// Plot model to display pulsed effects
+        /// </summary>
         public PlotModel PulsePlot { get; set; }
 
         public Settings(MainPage parent, StatusIndicator.IndicatorConfig config)
@@ -39,19 +47,23 @@ namespace PublicStatusIndicator.GUI_Elements
 
             _virtualIndicator = new StatusIndicator(config);
 
+            // Get all templates in order to visualize them
             Color[] _badTemp;
             Color[] _unstableTemp;
             Color[] _stableTemp;
             Color[] _processTemp;
             _virtualIndicator.GetAllTemplates(out _processTemp, out _badTemp, out _unstableTemp, out _stableTemp);
 
+            // Convert all extracted templates to grayscale waveforms
             int[] bad_GryTemp = ConverteColor2NormalizedGrayvalues(_badTemp);
             int[] unstable_GryTemp = ConverteColor2NormalizedGrayvalues(_unstableTemp);
             int[] stable_GryTemp = ConverteColor2NormalizedGrayvalues(_stableTemp);
             int[] process_GryTemp = ConverteColor2NormalizedGrayvalues(_processTemp);
 
+            // Display all rotated effects in according plot-model
             RotatePlot = CreatePlotModel(process_GryTemp, "Rotated Effect", "In Process", OxyColors.Yellow);
 
+            // Display all pulsed effects in according plot-model
             PulsePlot = CreatePlotModel(bad_GryTemp, "Pulsed Effect", "Is Bad", OxyColors.Red);
             Add2PlotModel(PulsePlot, unstable_GryTemp, "Is Unstable", OxyColors.Orange);
             Add2PlotModel(PulsePlot, stable_GryTemp, "Is Stable", OxyColors.Green);
@@ -59,34 +71,53 @@ namespace PublicStatusIndicator.GUI_Elements
             DataContext = this;
         }
 
+        /// <summary>
+        /// Creats Plot model and sets up basic configuration like axis appearence and colors
+        /// </summary>
+        /// <param name="y_data"></param>
+        /// <param name="title">Type of effect. To be displayed left of the y-axis</param>
+        /// <param name="label">Name of waveform. To be displayed in the upper right corner</param>
+        /// <param name="color">Color of waveform</param>
+        /// <returns></returns>
         private static PlotModel CreatePlotModel(int[] y_data, string title, string label, OxyColor color)
         {
-            var model = new PlotModel { Title = title };
+            var model = new PlotModel();
 
             model.Background = OxyColors.Black;
             model.TextColor = OxyColors.White;
             model.PlotAreaBorderColor = OxyColors.White;
 
-            var seriesRaw = new LineSeries()
-            {
-                MarkerStroke = color,
-            };
+            var seriesRaw = new LineSeries();
+            seriesRaw.Color = color;
+            seriesRaw.Title = label;
 
+            model.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Title = title});
+            model.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, IsAxisVisible = false });
+
+            // Add datapoints
             for (int i = 1; i < y_data.Length; i++)
             {
                 seriesRaw.Points.Add(new DataPoint(i, y_data[i]));
             }
             model.Series.Add(seriesRaw);
+
             return model;
         }
 
+        /// <summary>
+        /// Appends additional axis to existing plot model
+        /// </summary>
+        /// <param name="plot"></param>
+        /// <param name="y_data"></param>
+        /// <param name="label">Name of waveform. To be displayed in the upper right corner</param>
+        /// <param name="color">Color of waveform</param>
         private static void Add2PlotModel(PlotModel plot, int[] y_data, string label, OxyColor color)
         {
-            var seriesRaw = new LineSeries()
-            {
-                MarkerStroke = color,
-            };
+            var seriesRaw = new LineSeries();
+            seriesRaw.Color = color;
+            seriesRaw.Title = label;
 
+            // Add datapoints
             for (int i = 1; i < y_data.Length; i++)
             {
                 seriesRaw.Points.Add(new DataPoint(i, y_data[i]));
@@ -94,7 +125,12 @@ namespace PublicStatusIndicator.GUI_Elements
             plot.Series.Add(seriesRaw);
         }
 
-        int NORM_MAX = 1000;
+        const int NORM_MAX = 100;
+        /// <summary>
+        /// Converts colored waveform into grayscale values. Normalizes output to given maximum.
+        /// </summary>
+        /// <param name="waveform"></param>
+        /// <returns></returns>
         int[] ConverteColor2NormalizedGrayvalues(Color[] waveform)
         {
             int[] gray = new int[waveform.Length];
@@ -110,7 +146,7 @@ namespace PublicStatusIndicator.GUI_Elements
             }
             for (int i = 0; i < gray.Length; i++)
             {
-                gray[i] = gray[i] * 100 / Wmax;
+                gray[i] = gray[i] * NORM_MAX / Wmax;
             }
             return gray;
         }

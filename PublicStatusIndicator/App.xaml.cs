@@ -35,11 +35,12 @@ namespace PublicStatusIndicator
     /// </summary>
     sealed partial class App : Application
     {
+        #region HardCoded
         private const int MS_TICK = 40;                 // -> Refresh-Frequency 25 per second
-
         private const int LEDSTRIP_LEN = 24;
-        private const int LED_ROTATE_SMOOTHNESS  = 2;   // Rounds per second = 1000/40/24 
-        private const int LED_PULSE_VALUES = 3*1000/MS_TICK;     
+        private const int LED_ROTATE_SMOOTHNESS  = 2;           // Rounds per second = SF * 24*40/1000 <= Hier ca. 2
+        private const int LED_PULSE_VALUES = 3 * 1000/MS_TICK;  // 
+        #endregion
 
         Frame rootFrame = Window.Current.Content as Frame;
         LED_Strip _ledStrip;
@@ -47,9 +48,7 @@ namespace PublicStatusIndicator
 
         public EngineState _state { get; set; }
         public DispatcherTimer RefreshTimer { get; set; }
-
-
-
+        
         public App()
         {
             this.InitializeComponent();

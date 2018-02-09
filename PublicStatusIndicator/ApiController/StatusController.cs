@@ -88,5 +88,10 @@ namespace PublicStatusIndicator.ApiController
         );
             return await Ok(EngineDefines.StateOutputs[EngineState.Stable]);
         }
+
+        //@todo 
+        // summon Sauron
+        // dismiss Sauron
+        // Give me Saurons view
     }
 }

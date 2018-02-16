@@ -89,9 +89,47 @@ namespace PublicStatusIndicator.ApiController
             return await Ok(EngineDefines.StateOutputs[EngineState.Stable]);
         }
 
-        //@todo 
-        // summon Sauron
-        // dismiss Sauron
-        // Give me Saurons view
+
+        [Route("/StatusController/SummonSauron")]
+        public async Task<HttpResponseMessage> SummonSauron()
+        {
+            throw new NotImplementedException();
+            return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
+        }
+
+        [Route("/StatusController/DismissSauron")]
+        public async Task<HttpResponseMessage> DismissSauron()
+        {
+            throw new NotImplementedException();
+            return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
+        }
+
+        [Route("/StatusController/OrderSauronToBlame")]
+        public async Task<HttpResponseMessage> SauronBlame()
+        {
+            throw new NotImplementedException();
+            return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
+        }
+
+        [Route("/StatusController/UpsetSauron")]
+        public async Task<HttpResponseMessage> UpsetSauron()
+        {
+            throw new NotImplementedException();
+            return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
+        }
+
+        [Route("/StatusController/TeachSauron")]
+        public async Task<HttpResponseMessage> TeachSauron()
+        {
+            throw new NotImplementedException();
+            return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
+        }
+
+        [Route("/StatusController/AskSauronForCoords")]
+        public async Task<HttpResponseMessage> AskSauronForCoords()
+        {
+            throw new NotImplementedException();
+            return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
+        }
     }
 }

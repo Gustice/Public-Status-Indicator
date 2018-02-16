@@ -40,6 +40,10 @@ namespace PublicStatusIndicator.GUI_Elements
         /// </summary>
         public PlotModel PulsePlot { get; set; }
 
+
+        public PlotModel MovePlot { get; set; }
+
+
         public Settings(MainPage parent, StatusIndicator.IndicatorConfig config)
         {
             ParentPage = parent;
@@ -47,26 +51,48 @@ namespace PublicStatusIndicator.GUI_Elements
 
             _virtualIndicator = new StatusIndicator(config);
 
-            // Get all templates in order to visualize them
-            Color[] _badTemp;
-            Color[] _unstableTemp;
-            Color[] _stableTemp;
-            Color[] _processTemp;
-            _virtualIndicator.GetAllTemplates(out _processTemp, out _badTemp, out _unstableTemp, out _stableTemp);
-
-            // Convert all extracted templates to grayscale waveforms
-            int[] bad_GryTemp = ConverteColor2NormalizedGrayvalues(_badTemp);
-            int[] unstable_GryTemp = ConverteColor2NormalizedGrayvalues(_unstableTemp);
-            int[] stable_GryTemp = ConverteColor2NormalizedGrayvalues(_stableTemp);
-            int[] process_GryTemp = ConverteColor2NormalizedGrayvalues(_processTemp);
-
+            // Convert templates to grayscale waveforms
+            int[] process_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.ProcessTemplate);
+            int[] sauron_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.SauronTemplate);
+            
             // Display all rotated effects in according plot-model
             RotatePlot = CreatePlotModel(process_GryTemp, "Rotated Effect", "In Process", OxyColors.Yellow);
+            Add2PlotModel(RotatePlot, sauron_GryTemp, "Saurons Eye", OxyColors.Red);
+
+
+            // Convert templates to grayscale waveforms
+            int[] bad_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.BadTemplate);
+            int[] unstable_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.UnstableTemplate);
+            int[] stable_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.StableTemplate);
 
             // Display all pulsed effects in according plot-model
             PulsePlot = CreatePlotModel(bad_GryTemp, "Pulsed Effect", "Is Bad", OxyColors.Red);
             Add2PlotModel(PulsePlot, unstable_GryTemp, "Is Unstable", OxyColors.Orange);
             Add2PlotModel(PulsePlot, stable_GryTemp, "Is Stable", OxyColors.Green);
+
+            SauronHabits moves = new SauronHabits(
+                new SauronHabits.NervousEye.Config() { Interval = 5, Section = 1},
+                new SauronHabits.CuriousEye.Config() { Interval = 20, Section = 30, Duration = 40}
+                );
+
+            int[] nMove = new int[100];
+            int i = 0;
+            for (i = 0; i < nMove.Length; i++)
+            {
+                nMove[i] = moves.DitherEyeRandomly() * 5;
+            }
+            int[] fMove = new int[100];
+
+            i = 0;
+            fMove[i] = moves.ChangeFixPoint(30);
+            for (i++; i < fMove.Length/2; i++)
+                fMove[i] = moves.ChangeFixPoint();
+            fMove[i] = moves.ChangeFixPoint(-60);
+            for (i++; i < fMove.Length; i++)
+                fMove[i] = moves.ChangeFixPoint();
+
+            MovePlot = CreatePlotModel(nMove, "Move Effect", "Nervous Dither", OxyColors.Yellow);
+            Add2PlotModel(MovePlot, fMove, "Random Fixpoint", OxyColors.Orange);
 
             DataContext = this;
         }

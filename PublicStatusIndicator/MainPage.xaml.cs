@@ -107,7 +107,7 @@ namespace PublicStatusIndicator
                     break;
 
                 case "testSauron":
-
+                    newState = EngineState.Sauron;
                     break;
 
                 case "showProfiles":

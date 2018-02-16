@@ -30,23 +30,12 @@ namespace PublicStatusIndicator
         int _smoothness;
         int _pulsePeriode;
 
-        //@todo hier bereinigen
-        Color[] EyePrototype = new Color[] {
-            Color.FromArgb(0xFF, 0x00, 0x00, 0x00),
-            Color.FromArgb(0xFF, 0x40, 0x00, 0x00),
-            Color.FromArgb(0xFF, 0x80, 0x00, 0x00),
-            Color.FromArgb(0xFF, 0x80, 0x60, 0x00),
-            Color.FromArgb(0xFF, 0x40, 0x00, 0x00),
-            Color.FromArgb(0xFF, 0x80, 0x80, 0x00),
-            Color.FromArgb(0xFF, 0x40, 0x00, 0x00),
-            Color.FromArgb(0xFF, 0x80, 0x60, 0x00),
-            Color.FromArgb(0xFF, 0x80, 0x00, 0x00),
-            Color.FromArgb(0xFF, 0x40, 0x00, 0x00),
-            Color.FromArgb(0xFF, 0x00, 0x00, 0x00),
-        };
-        Color[] EyeTemplate; 
-
-
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="numPixels"></param>
+        /// <param name="smothness"></param>
+        /// <param name="pulsePeriode"></param>
         public LED_Strip(int numPixels, int smothness, int pulsePeriode)
         {
             _numPixels = numPixels;
@@ -59,26 +48,6 @@ namespace PublicStatusIndicator
             _ledIndicator = new StatusIndicator(config);
             _ledIndicator.MaxBrightnes = 0xF0;
             _rgBring = new Color[_numPixels];
-
-            EyeTemplate = new Color[_numPixels * _smoothness*2];
-
-            int len = EyePrototype.Length;
-            for (int i = 0; i < len-1; i++)
-            {
-                for (int j = 0; j < _smoothness-1; j++)
-                {
-                    Color temp = Color.FromArgb(0xFF,
-                        (byte)((int)EyePrototype[i].R * (_smoothness - j) / _smoothness + (int)EyePrototype[i + 1].R * (j) / _smoothness),
-                        (byte)((int)EyePrototype[i].G * (_smoothness - j) / _smoothness + (int)EyePrototype[i + 1].G * (j) / _smoothness),
-                        (byte)((int)EyePrototype[i].B * (_smoothness - j) / _smoothness + (int)EyePrototype[i + 1].B * (j) / _smoothness));
-                    EyeTemplate[i * _smoothness + j] = temp;
-                }
-            }
-
-            for (int i = 0; i < EyeTemplate.Length/2; i++)
-            {
-                EyeTemplate[i + EyeTemplate.Length / 2] = EyeTemplate[i];
-            }
         }
 
         /// <summary>
@@ -98,17 +67,6 @@ namespace PublicStatusIndicator
         public void ChangeState(EngineState newState)
         {
             _state = newState;
-        }
-
-
-        public void SetEyePosition(int num) // @todo ggf. löschen
-        {
-            _leDstrip.ResetLEDs();
-            for (int i = 0; i < _numPixels; i++)
-            {
-                _leDstrip.SetLED(i, EyeTemplate[num+i*_smoothness]);
-            }
-            _leDstrip.UpdateLEDs();
         }
 
         /// <summary>

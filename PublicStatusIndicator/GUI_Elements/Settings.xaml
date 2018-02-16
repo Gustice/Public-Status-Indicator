@@ -25,6 +25,8 @@
             <oxy:PlotView Model="{Binding PulsePlot}" />
         </Grid>
 
-
+        <Grid Grid.Row="3" Margin="30,10">
+            <oxy:PlotView Model="{Binding MovePlot}" />
+        </Grid>
     </Grid>
 </UserControl>

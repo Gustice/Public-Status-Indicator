@@ -13,10 +13,11 @@ namespace PublicStatusIndicator.IndicatorEngine
         private const byte OffsetBrightness = byte.MaxValue / 6;
 
         // Prepared colored waveforms to display states
-        private Color[] _badTemplate;
-        private Color[] _unstableTemplate;
-        private Color[] _stableTemplate;
-        private Color[] _processTemplate;
+        public Color[] BadTemplate;
+        public Color[] UnstableTemplate;
+        public Color[] StableTemplate;
+        public Color[] ProcessTemplate;
+        public Color[] SauronTemplate;
 
         // Generatet single image out of prepared waveform considering demanded displaystate
         private readonly Color[] _physicallRing;
@@ -26,6 +27,7 @@ namespace PublicStatusIndicator.IndicatorEngine
         private PulseEffect _VirStabelEffect;
         private PulseEffect _VirUnstabelEffect;
         private RotateEffect _VirPrcsEffect;
+        private SauronEffect _Sauron;
 
         /// <summary>
         /// Length of predefined smoothned color values to be displayed on an particular LED-strip as rotated image with intermediate states
@@ -36,7 +38,6 @@ namespace PublicStatusIndicator.IndicatorEngine
         /// Length of predefined color values to be displayed on an particular LED-strip as pulsed waveform
         /// </summary>
         int _virtualPulselength;
-
 
         private byte _maxBrightnes = 0xFF;
 
@@ -55,6 +56,10 @@ namespace PublicStatusIndicator.IndicatorEngine
             }
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="configuration"></param>
         public StatusIndicator(IndicatorConfig configuration)
         {
             int targetCnt = configuration.TargetPixels;
@@ -71,15 +76,18 @@ namespace PublicStatusIndicator.IndicatorEngine
         /// </summary>
         private void InitAllWaveforms()
         {
-            _processTemplate = InitRotatingPulse(_virtualRotateLenght);
-            _stableTemplate = InitStablePulse(_virtualPulselength);
-            _unstableTemplate = InitUnstablePulse(_virtualPulselength);
-            _badTemplate = InitBadPause(_virtualPulselength);
+            ProcessTemplate = InitRotatingPulse(_virtualRotateLenght);
+            StableTemplate = InitStablePulse(_virtualPulselength);
+            UnstableTemplate = InitUnstablePulse(_virtualPulselength);
+            BadTemplate = InitBadPause(_virtualPulselength);
 
-            _VirPrcsEffect = new RotateEffect(_processTemplate, _physicallRing);
-            _VirStabelEffect = new PulseEffect(_stableTemplate, _physicallRing);
-            _VirUnstabelEffect = new PulseEffect(_unstableTemplate, _physicallRing);
-            _VirBadEffect = new PulseEffect(_badTemplate, _physicallRing);
+            _VirPrcsEffect = new RotateEffect(ProcessTemplate, _physicallRing);
+            _VirStabelEffect = new PulseEffect(StableTemplate, _physicallRing);
+            _VirUnstabelEffect = new PulseEffect(UnstableTemplate, _physicallRing);
+            _VirBadEffect = new PulseEffect(BadTemplate, _physicallRing);
+
+            SauronTemplate = InitSauronsEye(_physicallRing.Length);
+            _Sauron = new SauronEffect(SauronTemplate, _physicallRing);
         }
 
         /// <summary>
@@ -101,6 +109,25 @@ namespace PublicStatusIndicator.IndicatorEngine
                 pulseTemp[i] = Color.FromArgb(MaxBrightnes, 
                     (byte) p[i],            // Full Red
                     (byte) (p[i]*12/16),    // Add some Green
+                    0x00);
+
+            return pulseTemp;
+        }
+
+
+        private Color[] InitSauronsEye(int phyLenth)
+        {
+            phyLenth = phyLenth * 3;
+            Color[] pulseTemp = new Color[phyLenth];
+
+            int[] p = new int[phyLenth];
+            p = GenerateGausianPulse(phyLenth, 12, 0);
+            
+            // Generate yellow waveform from grayvalues. 
+            for (int i = 0; i < phyLenth; i++)
+                pulseTemp[i] = Color.FromArgb(MaxBrightnes,
+                    (byte)p[i],             // Full Red
+                    (byte)(p[i] * 4 / 16),  // Add some Green
                     0x00);
 
             return pulseTemp;
@@ -242,47 +269,6 @@ namespace PublicStatusIndicator.IndicatorEngine
         }
 
         /// <summary>
-        ///  Returns plotable grayscale waveforms of colored pulse waveforms
-        /// </summary>
-        /// <param name="processStateProfile"></param>
-        /// <param name="goodStateProfile"></param>
-        /// <param name="badStateProfile"></param>
-        public void GetCurvesAsGrayValues(out byte[] processStateProfile, out byte[] goodStateProfile,
-            out byte[] badStateProfile)
-        {
-            processStateProfile = MakeGrayValuesToDataProfile(_processTemplate);
-            goodStateProfile = MakeGrayValuesToDataProfile(_stableTemplate);
-            badStateProfile = MakeGrayValuesToDataProfile(_badTemplate);
-        }
-
-        /// <summary>
-        /// Transforms colored waveform to plotable (and normalized) graysscale waveform
-        /// </summary>
-        /// <param name="colorArray"></param>
-        /// <returns></returns>
-        private static byte[] MakeGrayValuesToDataProfile(Color[] colorArray)
-        {
-            byte[] outputArray = new byte[colorArray.Length];
-
-            int[] grayArray = new int[colorArray.Length];
-            int maxValue = 0;
-            for (int i = 0; i < colorArray.Length; i++)
-            {
-                grayArray[i] = colorArray[i].R;
-                grayArray[i] += colorArray[i].G;
-                grayArray[i] += colorArray[i].B;
-                grayArray[i] = grayArray[i] * colorArray[i].A / byte.MaxValue;
-                maxValue = Math.Max(maxValue, grayArray[i]);
-            }
-            
-            // Normalize values to byte
-            for (int i = 0; i < grayArray.Length; i++)
-                outputArray[i] = (byte) (grayArray[i] * byte.MaxValue / maxValue);
-
-            return outputArray;
-        }
-
-        /// <summary>
         /// Generates parametrized gausian pulse.
         /// Pulse is normalized to 100 %. Concentration can be defined by peakForm value.
         /// Peak is ajusted allway to middle positoin of given lenth
@@ -392,6 +378,10 @@ namespace PublicStatusIndicator.IndicatorEngine
                 case EngineState.Stable:
                     colorSeries = _VirStabelEffect.PulseStep();
                     break;
+
+                case EngineState.Sauron:
+                    colorSeries = _Sauron.SauronStep();
+                    break;
             }
 
             return colorSeries;
@@ -415,22 +405,10 @@ namespace PublicStatusIndicator.IndicatorEngine
                 case EngineState.Bad:
                     _VirBadEffect.ResetIndex();
                     break;
+                case EngineState.Sauron:
+                    _Sauron.SetNextMode(SauronEffect.States.Appear);
+                    break;
             }
-        }
-
-        /// <summary>
-        /// Return colored templates for all animated states
-        /// </summary>
-        /// <param name="process"></param>
-        /// <param name="bad"></param>
-        /// <param name="unstable"></param>
-        /// <param name="stable"></param>
-        public void GetAllTemplates(out Color[] process, out Color[] bad, out Color[] unstable, out Color[] stable )
-        {
-            process = _processTemplate;
-            bad = _badTemplate;
-            unstable = _unstableTemplate;
-            stable = _stableTemplate;
         }
 
         /// <summary>

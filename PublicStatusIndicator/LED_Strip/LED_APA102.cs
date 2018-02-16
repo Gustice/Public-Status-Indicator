@@ -219,20 +219,26 @@ namespace PublicStatusIndicator
         /// <param name="Send"></param>
         protected override void GenLEDStram(out byte[] Send)
         {
-            int streamLen = RGBset.LEDValByteWidth * (LEDs.Count + 2);
+            int streamLen = RGBset.LEDValByteWidth * LEDs.Count + StartSeq.Length + StopSeq.Length;
             byte[] part;
-            int idx;
+            int i;
+            int lastI;
             Send = new byte[streamLen];
 
-            StartSeq.CopyTo(Send, 0);
+            for (i = 0; i < StartSeq.Length; i++)
+                Send[i] = StartSeq[i];
+            lastI = i;
 
-            for (idx = 0; idx < LEDs.Count; idx++)
+            for (int idx = 0; idx < LEDs.Count; idx++)
             {
                 LEDs[idx].GenValueStram(out part);
-                part.CopyTo(Send, (1 + idx) * RGBset.LEDValByteWidth);
-            }
 
-            StopSeq.CopyTo(Send, (1 + idx) * RGBset.LEDValByteWidth);
+                for (i=0; i < RGBset.LEDValByteWidth; i++)
+                    Send[i+ lastI] = part[i];
+                lastI += RGBset.LEDValByteWidth;
+            }
+            for (i = 0; i < StopSeq.Length; i++)
+                Send[i + lastI] = StopSeq[i];
         }
 
         /// <summary>
@@ -243,6 +249,7 @@ namespace PublicStatusIndicator
             for (int idx = 0; idx < LEDs.Count; idx++)
             {
                 RGBset temp = new RGBset();
+                temp.SetRGBvalue(0xFF, 0, 0, 0);
                 LEDs[idx] = temp;
             }
         }

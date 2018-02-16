@@ -96,7 +96,7 @@ namespace PublicStatusIndicator.IndicatorEngine
         protected Color[] Temp;
 
         /// <summary>
-        /// 
+        /// Return valid revolved index 
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>

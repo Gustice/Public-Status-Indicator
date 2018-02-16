@@ -43,6 +43,11 @@ namespace PublicStatusIndicator.IndicatorEngine
         /// Operation successfull.
         /// </summary>
         Stable,
+
+        /// <summary>
+        /// Blame the unworthy dwarf who dared to mess this up
+        /// </summary>
+        Sauron,
     }
 
     /// <summary>
@@ -58,6 +63,7 @@ namespace PublicStatusIndicator.IndicatorEngine
             {EngineState.Bad, "BAD"},
             {EngineState.Unstable, "Unstable"},
             {EngineState.Stable, "Stable"},
+            {EngineState.Sauron, "O.o"},
         };
 
         public static readonly Dictionary<EngineState, Color> StateColors = new Dictionary<EngineState, Color>
@@ -68,6 +74,7 @@ namespace PublicStatusIndicator.IndicatorEngine
             {EngineState.Bad,       Color.FromArgb(0xFF, 0x80, 0x00, 0x00)},
             {EngineState.Unstable,  Color.FromArgb(0xFF, 0x40, 0x60, 0x00)},
             {EngineState.Stable,    Color.FromArgb(0xFF, 0x00, 0x80, 0x00)},
+            {EngineState.Sauron,    Color.FromArgb(0xFF, 0x80, 0x04, 0x00)},
         };
     }
 }

@@ -78,7 +78,7 @@ namespace PublicStatusIndicator
        
         private void DirPreset_OnEncoderStepCB(int pos)
         {
-            _ledStrip.SetEyePosition(pos);
+
         }
 
         private void InitWebserver()

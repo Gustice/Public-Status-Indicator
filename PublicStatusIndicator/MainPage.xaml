@@ -34,6 +34,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="20" />
                 <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
                 <RowDefinition Height="20" />
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
@@ -67,8 +68,22 @@
 
             <Button Grid.Row="3" Name="testSauron" Content="Sauron Blame" 
                     Style="{StaticResource style_Button}" Click="Button_Action"/>
+            <Grid Grid.Row="4" HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="-" FontSize="32" />
+                <TextBlock Grid.Column="1" Text="Test" FontSize="28" Width="150" TextAlignment="Center" HorizontalAlignment="Center"/>
+                <Button Grid.Column="2" Content="+" FontSize="32" />
+            </Grid>
+            
+            
+                       
+            
 
-            <Button Grid.Row="5" Name="showProfiles" Content="show Profiles" 
+            <Button Grid.Row="6" Name="showProfiles" Content="show Profiles" 
                     Style="{StaticResource style_Button}" FontWeight="Normal" Click="Button_Action"/>
         </Grid>
     </Grid>

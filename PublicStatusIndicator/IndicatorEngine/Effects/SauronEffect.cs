@@ -11,35 +11,41 @@ namespace PublicStatusIndicator.IndicatorEngine
 
         const int EYE_MOVE_INTERVAL = 25 * 4;     // All x frames the eye can move to a completely different position
         const int EYE_MOVE_DURATION = 25 / 2;
+        const int EYE_MOVE_FAST = 25 / 4;
+
 
         const int BLINK_INTERVAL = 25 * 10;   // All x frames the eye can blink
-        const int BLAZE_MARGIN = byte.MaxValue * 50/ byte.MaxValue;          // The maximum brightness will be reduced to add noise which appears as blazing flames
         #endregion
 
         Random _blazeingP = new Random();
+        Random _fireI = new Random();
+        Random _flickrP = new Random();
 
         int _targetLen;
         int _maxIndex;
         int _reduceFactor;
 
-        Color[] Source;
-        Color[] DimmedSource;
+        Color[] EyeSrc;
+        Color[] BlazeEnvelope;
+        Color[] FireEnvelope;
         Color[] TempOut;
 
         BoundedInt _R_Idx;
 
         SauronHabits Habits;
 
-        public SauronEffect(Color[] source, Color[] target)
+        public SauronEffect(SauronEffect.SauronsEye template, Color[] target)
         {
             _targetLen = target.Length;
-            Source = source;
+            EyeSrc = template.Iris;
+            BlazeEnvelope = template.Aurora;
+            FireEnvelope = template.Fire;
 
-            _maxIndex = source.Length;
+
+            _maxIndex = template.Iris.Length;
             _reduceFactor = _maxIndex / _targetLen;
 
             TempOut = new Color[target.Length];
-            DimmedSource = DimmFullScaleSource(Source);
 
             Habits = new SauronHabits(
                 new SauronHabits.NervousEye.Config { Interval = DITHER_INTEVAL, Section = DITHER_SWING },
@@ -48,40 +54,6 @@ namespace PublicStatusIndicator.IndicatorEngine
 
 
             _R_Idx = new BoundedInt(0, _maxIndex-1);
-        }
-
-        Color[] DimmFullScaleSource(Color[] source)
-        {
-            Color[] dimmed = new Color[source.Length];
-            int maxR = 0;
-            int maxG = 0;
-            int maxB = 0; 
-
-            //for (int i = 0; i < source.Length; i++)
-            //{
-            //    if (source[i].R > maxR)
-            //        maxR = source[i].R;
-            //    if (source[i].G > maxG)
-            //        maxG = source[i].G;
-            //    if (source[i].B > maxB)
-            //        maxB = source[i].B;
-            //}
-
-            int ilumFactor = byte.MaxValue - BLAZE_MARGIN;
-
-            maxR = byte.MaxValue * ilumFactor / byte.MaxValue;
-            maxG = byte.MaxValue * ilumFactor / byte.MaxValue;
-            maxB = byte.MaxValue * ilumFactor / byte.MaxValue;
-
-            // Normalize Pulse to maximum value by considering demanded offset value
-            for (int i = 0; i < source.Length; i++)
-            {
-                dimmed[i].R = (byte)((int)source[i].R * maxR / byte.MaxValue);
-                dimmed[i].G = (byte)((int)source[i].G * maxG / byte.MaxValue);
-                dimmed[i].B = (byte)((int)source[i].B * maxB / byte.MaxValue);
-            }
-
-            return dimmed;
         }
 
         States step = States.Appear;
@@ -115,7 +87,7 @@ namespace PublicStatusIndicator.IndicatorEngine
                     {
                         step = States.Move;
                         stateCnt = 0;
-                        relIdx = Habits.ChangeFixPoint(20);
+                        relIdx = Habits.ChangeFixPoint(20, EYE_MOVE_FAST);
                     }
                     DisplayBlazingSpot(_Intensity);
                     break;
@@ -126,14 +98,20 @@ namespace PublicStatusIndicator.IndicatorEngine
                     if (stateCnt >= 30)
                     {
                         step = States.Mad;
+                        _madState = 0;
                         stateCnt = 0;
                     }
                     DisplayBlazingSpot(_Intensity);
                     break;
 
                 case States.Mad:
-                    DisplayBlazingSpot(_Intensity);
-                    step = States.Disappear;
+                    DisplayMadSauron();
+                    stateCnt++;
+                    if (stateCnt >= 5*25)
+                    {
+                        step = States.Disappear;
+                        stateCnt = 0;
+                    }
                     break;
 
                 case States.Disappear:
@@ -141,11 +119,12 @@ namespace PublicStatusIndicator.IndicatorEngine
                     if (_Intensity <= 0)
                     {
                         _Intensity = 0;
-                        step = States.Idle;
+                        step = States.Random;
                         stateCnt = 0;
                     }
                     DisplayBlazingSpot(_Intensity);
                     break;
+
                 case States.Random:
                     break;
             }
@@ -154,26 +133,20 @@ namespace PublicStatusIndicator.IndicatorEngine
         }
 
         int relIdx = 0;
-
-
         private void DisplayBlazingSpot(int intens)
         {
             // Display Blazing Spot
-            int add = 0;
             for (int i = 0; i < _targetLen; i++)
             {
-                TempOut[i] = DimmedSource[relIdx];
+                TempOut[i] = EyeSrc[relIdx];
 
-                add = (_blazeingP.Next(0, (int)Source[relIdx].R * BLAZE_MARGIN / byte.MaxValue));
-                TempOut[i].R = (byte)(TempOut[i].R + (byte)add);
+                TempOut[i].R = (byte)(TempOut[i].R + (byte)(_blazeingP.Next(0, BlazeEnvelope[relIdx].R)));
                 TempOut[i].R = (byte)((int)TempOut[i].R * intens / MAX_INTESITY);
 
-                add = (_blazeingP.Next(0, (int)Source[relIdx].G * BLAZE_MARGIN / byte.MaxValue));
-                TempOut[i].G = (byte)(TempOut[i].G + (byte)add);
+                TempOut[i].G = (byte)(TempOut[i].G + (byte)(_blazeingP.Next(0, BlazeEnvelope[relIdx].G)));
                 TempOut[i].G = (byte)((int)TempOut[i].G * intens / MAX_INTESITY);
 
-                add = (_blazeingP.Next(0, (int)Source[relIdx].B * BLAZE_MARGIN / byte.MaxValue));
-                TempOut[i].B = (byte)(TempOut[i].B + (byte)add);
+                TempOut[i].B = (byte)(TempOut[i].B + (byte)(_blazeingP.Next(0, BlazeEnvelope[relIdx].B)));
                 TempOut[i].B = (byte)((int)TempOut[i].B * intens / MAX_INTESITY);
 
                 relIdx += _reduceFactor;
@@ -181,6 +154,88 @@ namespace PublicStatusIndicator.IndicatorEngine
             }
         }
 
+
+
+        int _madState = 0;
+        int _madWhaitCnt = 0;
+        float _FireIntensity = 0;
+
+        const int MAD_WAIT_STATES = 50;
+        const int MAX_FIRE_INTENS = byte.MaxValue/4;
+        const int FIRE_INTENS_SLOPE = 1;
+        private void DisplayMadSauron()
+        {
+            switch (_madState)
+            {
+                case 0:
+
+                    _FireIntensity = (float)Math.Exp((float)_madWhaitCnt/3)-1;
+                    if (_FireIntensity >= MAX_FIRE_INTENS)
+                    {
+                        _FireIntensity = MAX_FIRE_INTENS;
+                        _madState++;
+                        _madWhaitCnt = 0;
+                    }
+                    _madWhaitCnt++;
+                    break;
+
+                case 1:
+                    _madWhaitCnt++;
+                    if (_madWhaitCnt >= MAD_WAIT_STATES)
+                    {
+                        _madState++;
+                        _madWhaitCnt = 0;
+                    }
+                    break;
+
+                case 2:
+                    _FireIntensity = _FireIntensity * (float)Math.Exp((float)-1 / 3);
+                    if (_FireIntensity <= 1)
+                    {
+                        _FireIntensity = 0;
+                        _madState++;
+                        _madWhaitCnt = 0;
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+
+            int invFireIntens = MAX_FIRE_INTENS - (int)_FireIntensity;
+
+            // Display Blazing Spot with fire in the background
+
+            byte burn, hBurn, eye, fire, blaze;
+            int _tempInt;
+
+            byte cEyeIntes = (byte)_flickrP.Next(70, 100);
+
+            for (int i = 0; i < _targetLen; i++)
+            {
+                eye = (byte)(EyeSrc[relIdx].R * cEyeIntes / 100);
+                blaze = (byte)(_blazeingP.Next(0, BlazeEnvelope[relIdx].R));
+                if (eye < _FireIntensity)
+                {
+                    _tempInt = (byte)((byte)_FireIntensity - eye);
+                }
+                else
+                {
+                    _tempInt = 0;
+                }
+                fire = (byte)(FireEnvelope[relIdx].R * _tempInt / 50);
+
+                burn = (byte)_fireI.Next(fire * 2 / 3, fire);
+                hBurn = (byte)_fireI.Next(4);
+
+                TempOut[i].R = (byte)(burn + eye + blaze);
+                TempOut[i].G = (byte)(burn * hBurn / 8 + eye * _FireIntensity / MAX_FIRE_INTENS + blaze);
+                TempOut[i].B = (byte)(eye * _FireIntensity / MAX_FIRE_INTENS / 3);
+
+                relIdx += _reduceFactor;
+                relIdx = CorrectIndexToRing(relIdx);
+            }
+        }
 
 
         //States _nextState = States.Appear;
@@ -207,6 +262,27 @@ namespace PublicStatusIndicator.IndicatorEngine
         public void MoveEyeTo(int direction)
         {
             _nextFixtPoint = direction;
+        }
+
+        /// <summary>
+        /// Eye Class to concentrate templates to generate different patterns
+        /// </summary>
+        public class SauronsEye
+        {
+            /// <summary>
+            /// Envelope curve for iris
+            /// </summary>
+            public Color[] Iris;
+
+            /// <summary>
+            /// Envelope curve for blazing aroura around iris
+            /// </summary>
+            public Color[] Aurora;
+
+            /// <summary>
+            /// Envelope curve for fire in case of madness
+            /// </summary>
+            public Color[] Fire;
         }
 
         /// <summary>
@@ -247,46 +323,93 @@ namespace PublicStatusIndicator.IndicatorEngine
     }
 
 
+    /// <summary>
+    /// Concentrates different haits of sauron and kan invoke the either randomly or at trigger event
+    /// </summary>
     class SauronHabits
     {
 
         NervousEye Dither;
         CuriousEye Curious;
+        BlinkyEye Blinky;
 
+        // @todo finish other possible habits
         public SauronHabits(NervousEye.Config cfgNervous, CuriousEye.Config cfgCurious)
         {
             Dither = new NervousEye(cfgNervous);
             Curious = new CuriousEye(cfgCurious);
+
         }
 
-
+        /// <summary>
+        /// Make Sauron look to slightly different positions from the current fixpoint
+        /// </summary>
+        /// <returns></returns>
         public int DitherEyeRandomly()
         {
             return Dither.DitherEyeRandomly();
         }
 
+        /// <summary>
+        /// Make Sauron to change his fixpoint randomly. He will somewhat explore his environment.
+        /// </summary>
+        /// <returns></returns>
         public int ChangeFixPointRandomly()
         {
             return Curious.ChangeFixPointRandomly();
         }
 
-        public int ChangeFixPoint(int deltaPhi = 0)
+        /// <summary>
+        /// Make Sauron to change his fixepoint on purpose (for expample to blame somebody).
+        /// </summary>
+        /// <param name="deltaPhi"></param>
+        /// <param name="velocity"></param>
+        /// <returns></returns>
+        public int ChangeFixPoint(int deltaPhi = 0, int velocity = 0)
         {
             if (deltaPhi != 0)
             {
-                Curious.InitNewMove(deltaPhi);
+                Curious.InitNewMove(deltaPhi, velocity);
             }
             return Curious.MovingStep();
         }
 
-        int _rdmBlinkCnt = 0;
-        void BlinkEyeRandomly()
-        {
 
+        // @todo This is not finished
+        public class BlinkyEye
+        {
+            Random _ditheringP = new Random();
+            int _interval;
+            int _duration;
+
+            int _rdmBlinkCnt = 0;
+            void BlinkEyeRandomly(Config config)
+            {
+                _interval = config.Interval;
+                _duration = config.Duration;
+            }
+
+            public int BlinkEyeRandomly()
+            {
+
+                return 0;
+            }
+
+            /// <summary>
+            /// Configuration Object 
+            /// </summary>
+            public struct Config
+            {
+                public int Interval;
+                public int Duration;
+            }
         }
 
-
-
+        /// <summary>
+        /// Curios eye habit. 
+        /// Methods to move eyes from fixepoint to fixepoint in a parabolic (not diabolic) matter.
+        /// Can be used randomly or on purpose.
+        /// </summary>
         public class CuriousEye
         {
             Random _movementP = new Random();
@@ -296,7 +419,10 @@ namespace PublicStatusIndicator.IndicatorEngine
             int _duration;
             int _halfDuration;
 
-
+            /// <summary>
+            /// Constructor 
+            /// </summary>
+            /// <param name="config"></param>
             public CuriousEye(CuriousEye.Config config)
             {
                 _interval = config.Interval;
@@ -305,13 +431,16 @@ namespace PublicStatusIndicator.IndicatorEngine
                 _halfDuration = _duration / 2;
 
                 _rdmCnt = _interval;
-
             }
 
             int _deltaDirection = 0;
             float _alpha = 0;
 
             int _rdmCnt;
+            /// <summary>
+            /// Return new random fixpoint from time to time and maintain its approach.
+            /// </summary>
+            /// <returns></returns>
             public int ChangeFixPointRandomly()
             {
                 // Get next fixpoint
@@ -336,36 +465,59 @@ namespace PublicStatusIndicator.IndicatorEngine
             int _phi_0 = 0;
             int _phi_T = 0;
 
-            
-            public void InitNewMove(int delta)
+            /// <summary>
+            /// Initiate to approach new fixpoint
+            /// </summary>
+            /// <param name="delta">if not 0, a new fixpoint will be approached relatively to current position</param>
+            /// <param name="duration">if not 0, the default movement time is overwritten with given value, works only together wit new fixpoint position</param>
+            public void InitNewMove(int delta, int duration = 0)
             {
-                _alpha = (float) delta / 2 * 8 / (_duration * _duration);
+                if (duration != 0)
+                {
+                    _alpha = (float)delta / 2 * 8 / (duration * duration);
+                    _halfDuration = duration / 2;
+                }
+                else
+                {
+                    _alpha = (float)delta / 2 * 8 / (_duration * _duration);
+                    _halfDuration = _duration / 2;
+                }
                 _AccStep = 0;
                 _tempT = 0;
                 _phi_0 = _phi_T;
             }
 
+            /// <summary>
+            /// Execute on moveing step. Movement followes the following equasions.
+            /// phi(t) = alpha / 2 * t^2
+            /// Where alpha = alpha_min = Phi/2 * 8 / T^2, which is the minimum acceleration to finish movement "Phi" in demanded period "T"
+            /// </summary>
+            /// <returns></returns>
             public int MovingStep()
             {
                 _tempT++;
                 switch (_AccStep)
                 {
+                    // initiative acceleration
                     case 0:
                         _phi = _alpha * (_tempT * _tempT) / 2;
                         _AccStep++;
                         break;
 
+                    // acceleration
                     case 1:
                         _phi = _alpha * (_tempT * _tempT) / 2;
-                        if (_tempT >= _halfDuration)
+
+                        if (_tempT >= _halfDuration) // At half way through
                         {
-                            _omega_T_2 = _alpha * _tempT;
-                            _phi_T_2 = _phi;
+                            _omega_T_2 = _alpha * _tempT;   // save gained velocity
+                            _phi_T_2 = _phi;                // save gained Phi
                             _tempT = 0;
                             _AccStep++;
                         }
                         break;
-
+                    
+                    // deceleration with gained velocity relative to gained Phi
                     case 2:
                         _phi = _phi_T_2 + _omega_T_2 * _tempT - _alpha * (_tempT * _tempT) / 2;
                         if (_tempT >= _halfDuration)
@@ -384,16 +536,32 @@ namespace PublicStatusIndicator.IndicatorEngine
                 return _phi_0 + (int)_phi;
             }
 
-
+            /// <summary>
+            /// Configuration Object 
+            /// </summary>
             public struct Config
             {
+                /// <summary>
+                /// Interval to decide randomly wheter a new fixpoint shall be approached.
+                /// </summary>
                 public int Interval;
+
+                /// <summary>
+                /// Maximum Degree to change the fixpoint relatevely to current position.
+                /// </summary>
                 public int Section;
+
+                /// <summary>
+                /// Frames in which the movement has to be finished.
+                /// </summary>
                 public int Duration;
             }
         }
 
-
+        /// <summary>
+        /// Nervous eye habit. 
+        /// Methods to move eyes sightly arount current fixepoint somewat nervous (because random) matter.
+        /// </summary>
         public class NervousEye
         {
             Random _ditheringP = new Random();
@@ -401,6 +569,10 @@ namespace PublicStatusIndicator.IndicatorEngine
             int _interval;
             int _section;
 
+            /// <summary>
+            /// Constructor
+            /// </summary>
+            /// <param name="config"></param>
             public NervousEye(NervousEye.Config config)
             {
                 _interval = config.Interval;
@@ -410,6 +582,10 @@ namespace PublicStatusIndicator.IndicatorEngine
 
             int _deltaDirection = 0;
             int _rdmCnt = 0;
+            /// <summary>
+            /// Return random deviation from current fixpoint
+            /// </summary>
+            /// <returns></returns>
             public int DitherEyeRandomly()
             {
                 if (_rdmCnt <= 0)
@@ -421,9 +597,19 @@ namespace PublicStatusIndicator.IndicatorEngine
                 return _deltaDirection;
             }
 
+            /// <summary>
+            /// Configuration Object 
+            /// </summary>
             public struct Config
             {
+                /// <summary>
+                /// Interval to decide randomly wheter a new deviation shall be applied.
+                /// </summary>
                 public int Interval;
+
+                /// <summary>
+                /// Maximum deviation from fixpoint.
+                /// </summary>
                 public int Section;
             }
         }

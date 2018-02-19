@@ -17,7 +17,12 @@ namespace PublicStatusIndicator.IndicatorEngine
         public Color[] UnstableTemplate;
         public Color[] StableTemplate;
         public Color[] ProcessTemplate;
-        public Color[] SauronTemplate;
+
+        SauronEffect.SauronsEye SauronsTemplates;
+        public Color[] SauronsIris;
+        public Color[] SauronsAurora;
+        public Color[] SauronsFire;
+
 
         // Generatet single image out of prepared waveform considering demanded displaystate
         private readonly Color[] _physicallRing;
@@ -86,8 +91,12 @@ namespace PublicStatusIndicator.IndicatorEngine
             _VirUnstabelEffect = new PulseEffect(UnstableTemplate, _physicallRing);
             _VirBadEffect = new PulseEffect(BadTemplate, _physicallRing);
 
-            SauronTemplate = InitSauronsEye(_physicallRing.Length);
-            _Sauron = new SauronEffect(SauronTemplate, _physicallRing);
+            SauronsTemplates = InitSauronsEye(_physicallRing.Length);
+            SauronsIris = SauronsTemplates.Iris;
+            SauronsAurora = SauronsTemplates.Aurora;
+            SauronsFire   = SauronsTemplates.Fire;
+
+            _Sauron = new SauronEffect(SauronsTemplates, _physicallRing);
         }
 
         /// <summary>
@@ -114,23 +123,71 @@ namespace PublicStatusIndicator.IndicatorEngine
             return pulseTemp;
         }
 
+        const int SAURON_SMOOTHNESS_FAKTOR = 3;
+        const int SAURONS_EYEPROP = 80;
+        const int SAURONS_BLAZINGPROP = 100 - SAURONS_EYEPROP;
+        const int SAURONS_FIRE = 50;
 
-        private Color[] InitSauronsEye(int phyLenth)
+        private SauronEffect.SauronsEye InitSauronsEye(int phyLenth)
         {
-            phyLenth = phyLenth * 3;
-            Color[] pulseTemp = new Color[phyLenth];
+            SauronEffect.SauronsEye temp = new SauronEffect.SauronsEye();
 
-            int[] p = new int[phyLenth];
-            p = GenerateGausianPulse(phyLenth, 12, 0);
-            
-            // Generate yellow waveform from grayvalues. 
+            phyLenth = phyLenth * SAURON_SMOOTHNESS_FAKTOR;
+
+            // Generate Iris
+            int[] pP = new int[phyLenth];
+            pP = GenerateGausianPulse(phyLenth, 12, 0);
+            // Scale Pulse to maximum 
+            for (int i = 0; i < pP.Length; i++)
+                pP[i] = pP[i] * SAURONS_EYEPROP / 100;
+
+            Color[] EyeTemp = new Color[phyLenth];
+            // Generate waveform from grayvalues. 
             for (int i = 0; i < phyLenth; i++)
-                pulseTemp[i] = Color.FromArgb(MaxBrightnes,
-                    (byte)p[i],             // Full Red
-                    (byte)(p[i] * 4 / 16),  // Add some Green
+                EyeTemp[i] = Color.FromArgb(MaxBrightnes,
+                    (byte)pP[i],             // Full Red
+                    (byte)(pP[i] * 4 / 16),  // Add some Green
                     0x00);
 
-            return pulseTemp;
+            temp.Iris = EyeTemp;
+
+            // Generate envelope for blazing flames araound iris
+            int[] pA = new int[phyLenth];
+            pA = GenerateGausianPulse(phyLenth, 6, 0);
+            // Scale Pulse to maximum 
+            for (int i = 0; i < pA.Length; i++)
+                pA[i] = pA[i] * SAURONS_BLAZINGPROP / 100;
+
+            Color[] AuroraTemp = new Color[phyLenth];
+            // Generate waveform from grayvalues. 
+            for (int i = 0; i < phyLenth; i++)
+                AuroraTemp[i] = Color.FromArgb(MaxBrightnes,
+                    (byte)pA[i],             // Full Red
+                    (byte)(pA[i] * 4 / 16),  // Add some Green
+                    0x00);
+
+            temp.Aurora = AuroraTemp;
+
+            // Generate envelope for fire in case of madness
+            int[] pF = new int[phyLenth];
+            pF = GenerateGausianPulse(phyLenth, 2, 0);
+            // Scale Pulse to maximum 
+            for (int i = 0; i < pF.Length; i++)
+                pF[i] = pF[i] * SAURONS_FIRE / 100;
+
+            Color[] FireTemp = new Color[phyLenth];
+
+            // Generate waveform from grayvalues. 
+            for (int i = 0; i < phyLenth; i++)
+                FireTemp[i] = Color.FromArgb(MaxBrightnes,
+                    (byte)pF[i],             // Full Red
+                    (byte)(pF[i] * 4 / 16),  // Add some Green
+                    0x00);
+
+            temp.Fire = FireTemp;
+
+
+            return temp;
         }
 
         /// <summary>
@@ -438,5 +495,6 @@ namespace PublicStatusIndicator.IndicatorEngine
                 PulseImages = pulseLength;
             }
         }
+
     }
 }

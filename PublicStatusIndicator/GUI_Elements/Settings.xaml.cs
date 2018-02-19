@@ -53,12 +53,22 @@ namespace PublicStatusIndicator.GUI_Elements
 
             // Convert templates to grayscale waveforms
             int[] process_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.ProcessTemplate);
-            int[] sauron_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.SauronTemplate);
-            
+            int[] sauron_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.SauronsIris);
+            int[] blaze_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.SauronsAurora);
+            int[] fire_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.SauronsFire);
+
+            for (int j = 0; j < sauron_GryTemp.Length; j++)
+            {
+                sauron_GryTemp[j] = sauron_GryTemp[j] * 80 / 100;
+                blaze_GryTemp [j] = blaze_GryTemp [j] * 20 / 100;
+                fire_GryTemp[j] = fire_GryTemp[j] * 50 / 100;
+            }
+
             // Display all rotated effects in according plot-model
             RotatePlot = CreatePlotModel(process_GryTemp, "Rotated Effect", "In Process", OxyColors.Yellow);
             Add2PlotModel(RotatePlot, sauron_GryTemp, "Saurons Eye", OxyColors.Red);
-
+            Add2PlotModel(RotatePlot, blaze_GryTemp, "Blazing Eye", OxyColors.Yellow);
+            Add2PlotModel(RotatePlot, fire_GryTemp, "Fire of Madness", OxyColors.Orange);
 
             // Convert templates to grayscale waveforms
             int[] bad_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.BadTemplate);

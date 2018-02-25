@@ -23,7 +23,6 @@ namespace PublicStatusIndicator.IndicatorEngine
         public Color[] SauronsAurora;
         public Color[] SauronsFire;
 
-
         // Generatet single image out of prepared waveform considering demanded displaystate
         private readonly Color[] _physicallRing;
 
@@ -49,7 +48,7 @@ namespace PublicStatusIndicator.IndicatorEngine
         /// <summary>
         /// Maximal gray-value to which all waveforms are normalized
         /// </summary>
-        public byte MaxBrightnes
+        public byte MaxBrightness
         {
             get { return _maxBrightnes; }
             set {
@@ -60,6 +59,7 @@ namespace PublicStatusIndicator.IndicatorEngine
                 }
             }
         }
+
 
         /// <summary>
         /// Constructor
@@ -115,7 +115,7 @@ namespace PublicStatusIndicator.IndicatorEngine
 
             // Generate yellow waveform from grayvalues. 
             for (int i = 0; i < length; i++)
-                pulseTemp[i] = Color.FromArgb(MaxBrightnes, 
+                pulseTemp[i] = Color.FromArgb(MaxBrightness, 
                     (byte) p[i],            // Full Red
                     (byte) (p[i]*12/16),    // Add some Green
                     0x00);
@@ -128,6 +128,15 @@ namespace PublicStatusIndicator.IndicatorEngine
         const int SAURONS_BLAZINGPROP = 100 - SAURONS_EYEPROP;
         const int SAURONS_FIRE = 50;
 
+        /// <summary>
+        /// Generates a waveform-set for Saurons eye with following approach:
+        /// The Iris Pulse is a sharply defined pulse to display the eye.
+        /// The Aurora is a slightly more deviated pulse which represents the envelope curve for superposed flackering fire of the Iris:
+        /// Iris and Aurora appears as blazing eye.
+        /// The Fire is a wide deviated pulse which represents the envelope curve for fire-like flickering in case mad state.
+        /// </summary>
+        /// <param name="phyLenth"></param>
+        /// <returns></returns>
         private SauronEffect.SauronsEye InitSauronsEye(int phyLenth)
         {
             SauronEffect.SauronsEye temp = new SauronEffect.SauronsEye();
@@ -135,59 +144,45 @@ namespace PublicStatusIndicator.IndicatorEngine
             phyLenth = phyLenth * SAURON_SMOOTHNESS_FAKTOR;
 
             // Generate Iris
-            int[] pP = new int[phyLenth];
-            pP = GenerateGausianPulse(phyLenth, 12, 0);
-            // Scale Pulse to maximum 
-            for (int i = 0; i < pP.Length; i++)
-                pP[i] = pP[i] * SAURONS_EYEPROP / 100;
-
-            Color[] EyeTemp = new Color[phyLenth];
-            // Generate waveform from grayvalues. 
-            for (int i = 0; i < phyLenth; i++)
-                EyeTemp[i] = Color.FromArgb(MaxBrightnes,
-                    (byte)pP[i],             // Full Red
-                    (byte)(pP[i] * 4 / 16),  // Add some Green
-                    0x00);
-
-            temp.Iris = EyeTemp;
+            temp.Iris = GetColoredPulse(phyLenth, 12, SAURONS_EYEPROP);
 
             // Generate envelope for blazing flames araound iris
-            int[] pA = new int[phyLenth];
-            pA = GenerateGausianPulse(phyLenth, 6, 0);
-            // Scale Pulse to maximum 
-            for (int i = 0; i < pA.Length; i++)
-                pA[i] = pA[i] * SAURONS_BLAZINGPROP / 100;
-
-            Color[] AuroraTemp = new Color[phyLenth];
-            // Generate waveform from grayvalues. 
-            for (int i = 0; i < phyLenth; i++)
-                AuroraTemp[i] = Color.FromArgb(MaxBrightnes,
-                    (byte)pA[i],             // Full Red
-                    (byte)(pA[i] * 4 / 16),  // Add some Green
-                    0x00);
-
-            temp.Aurora = AuroraTemp;
+            temp.Aurora = GetColoredPulse(phyLenth, 6, SAURONS_BLAZINGPROP);
 
             // Generate envelope for fire in case of madness
-            int[] pF = new int[phyLenth];
-            pF = GenerateGausianPulse(phyLenth, 2, 0);
-            // Scale Pulse to maximum 
-            for (int i = 0; i < pF.Length; i++)
-                pF[i] = pF[i] * SAURONS_FIRE / 100;
-
-            Color[] FireTemp = new Color[phyLenth];
-
-            // Generate waveform from grayvalues. 
-            for (int i = 0; i < phyLenth; i++)
-                FireTemp[i] = Color.FromArgb(MaxBrightnes,
-                    (byte)pF[i],             // Full Red
-                    (byte)(pF[i] * 4 / 16),  // Add some Green
-                    0x00);
-
-            temp.Fire = FireTemp;
-
+            temp.Fire = GetColoredPulse(phyLenth, 2, SAURONS_FIRE);
 
             return temp;
+        }
+
+        /// <summary>
+        /// Init normalized pulse for Saurons eye
+        /// </summary>
+        /// <param name="phyLenth"></param>
+        /// <param name="peak"></param>
+        /// <param name="prop"></param>
+        /// <returns></returns>
+        private Color[] GetColoredPulse(int phyLenth, int peak, int prop)
+        {
+            int[] p = new int[phyLenth];
+            p = GenerateGausianPulse(phyLenth, peak, 0);
+            // Scale Pulse to maximum 
+            for (int i = 0; i < p.Length; i++)
+                p[i] = p[i] * prop / 100;
+
+            Color[] temp = new Color[phyLenth];
+            // Generate waveform from grayvalues. 
+            for (int i = 0; i < phyLenth; i++)
+                temp[i] = Color.FromArgb(MaxBrightness,
+                    (byte)p[i],             // Full Red
+                    (byte)(p[i] * 4 / 16),  // Add some Green
+                    0x00);
+            return temp;
+        }
+
+        public void DeviateSauronsFixPoint(int delta)
+        {
+            _Sauron.R_Idx.Add(delta);
         }
 
         /// <summary>
@@ -216,7 +211,7 @@ namespace PublicStatusIndicator.IndicatorEngine
 
             // Generate green waveform from grayvalues. 
             for (i = 0; i < length; i++)
-                pulseTemp[i] = Color.FromArgb(MaxBrightnes, 
+                pulseTemp[i] = Color.FromArgb(MaxBrightness, 
                     0x00, 
                     (byte)p[i],     // Full Green
                     0x00);
@@ -258,7 +253,7 @@ namespace PublicStatusIndicator.IndicatorEngine
 
             // Generate red waveform from grayvalues. 
             for (i = 0; i < length; i++)
-                pulseTemp[i] = Color.FromArgb(MaxBrightnes, 
+                pulseTemp[i] = Color.FromArgb(MaxBrightness, 
                     (byte)p[i],     // Full Red
                     0x00, 
                     0x00);
@@ -317,7 +312,7 @@ namespace PublicStatusIndicator.IndicatorEngine
 
             // Generate colored waveform from grayvalue-channels. 
             for (i = 0; i < length; i++)
-                pulseTemp[i] = Color.FromArgb(MaxBrightnes, 
+                pulseTemp[i] = Color.FromArgb(MaxBrightness, 
                     (byte) p2[i],           // Add grayscale waveform fully to red
                     (byte) (p1[i]*12/16),   // Add grayscale waveform partly to green
                     0x00);
@@ -357,9 +352,98 @@ namespace PublicStatusIndicator.IndicatorEngine
         }
 
 
+
+        private EngineState _state = EngineState.Blank;
+        public EngineState State
+        {
+            get { return _state; }
+            set {
+                _state = value;
+
+                _fadingState = _lastState;
+                _lastState = _state;
+                _fadingCnt = FadingCycles;
+                ResetEffect(_state);
+            }
+        }
+
+        private List<ProfileElement> _profile = null;
+        public List<ProfileElement> Profile
+        {
+            get { return _profile; }
+            set {
+                _profile = value;
+                profileCnt = 0;
+                ProfileIdx = 0;
+            }
+        }
+
+        private int _profileIdx = 0;
+
+        public int ProfileIdx
+        {
+            get { return _profileIdx; }
+            set {
+                _profileIdx = value;
+
+                try
+                {
+                    var type = _profile[ProfileIdx].GetType();
+                    if (type == typeof(SauronProfileElement))
+                    {
+                        _sauronState = ((SauronProfileElement)_profile[ProfileIdx]).SauronState;
+                        if (_sauronState == SauronEffect.States.Move)
+                        {
+                            SauronProfileElement temp = (SauronProfileElement)_profile[ProfileIdx];
+                            _Sauron.ChangeFixPointTo(temp.NewPosition, temp.Duration);
+                        }
+                    }
+                }
+                catch
+                {
+                    // nothing if not possible
+                }
+            }
+        }
+
+
         private int _fadingCnt;
         private EngineState _fadingState;
         private EngineState _lastState = EngineState.Blank;
+
+        int profileCnt = 0;
+        public Color[] EffectAccordingToProfile()
+        {
+            Color[] tempReturn;
+
+            if (_profile != null)
+            {
+                var type = _profile[ProfileIdx].GetType();
+                if (type == typeof(SauronProfileElement) )  
+                {
+                    _sauronState = ((SauronProfileElement)_profile[ProfileIdx]).SauronState;
+                }
+                State = _profile[ProfileIdx].State;
+
+                profileCnt++;
+                if (profileCnt >= _profile[ProfileIdx].Duration)
+                {
+                    profileCnt = 0;
+                    ProfileIdx++;
+                    if (ProfileIdx >= _profile.Count)
+                    {
+                        ProfileIdx = 0;
+                        _profile = null;
+                    }
+                }
+                tempReturn = EffectAccordingToState();
+            }
+            else
+            {
+                tempReturn = EffectAccordingToState();
+            }
+            return tempReturn;
+        }
 
         /// <summary>
         /// Generats following image to an appropriate state.
@@ -367,17 +451,9 @@ namespace PublicStatusIndicator.IndicatorEngine
         /// </summary>
         /// <param name="currentState"></param>
         /// <returns></returns>
-        public Color[] EffectAccordingToState(EngineState currentState)
+        public Color[] EffectAccordingToState()
         {
-            if (currentState != _lastState)
-            {
-                _fadingState = _lastState;
-                _lastState = currentState;
-                _fadingCnt = FadingCycles;
-                ResetEffect(currentState);
-            }
-
-            Color[] appearing = GenerateNewImage(currentState);
+            Color[] appearing = GenerateNewImage(_state);
 
             // If in fading condition
             if (_fadingCnt > 0)
@@ -403,6 +479,7 @@ namespace PublicStatusIndicator.IndicatorEngine
             return _physicallRing;
         }
 
+        SauronEffect.States _sauronState = SauronEffect.States.Idle;
         /// <summary>
         /// Generats following image to an appropriate state.
         /// </summary>
@@ -416,12 +493,12 @@ namespace PublicStatusIndicator.IndicatorEngine
                 case EngineState.Blank:
                     colorSeries = new Color[_physicallRing.Length];
                     for (int i = 0; i < colorSeries.Length; i++)
-                        colorSeries[i] = Color.FromArgb(MaxBrightnes, 0x00, 0x00, 0x00);
+                        colorSeries[i] = Color.FromArgb(MaxBrightness, 0x00, 0x00, 0x00);
                     break;
                 case EngineState.Idle:
                     colorSeries = new Color[_physicallRing.Length];
                     for (int i = 0; i < colorSeries.Length; i++)
-                        colorSeries[i] = Color.FromArgb(MaxBrightnes, 0x02, 0x02, 0x02);
+                        colorSeries[i] = Color.FromArgb(MaxBrightness, 0x02, 0x02, 0x02);
                     break;
                 case EngineState.Progress:
                     colorSeries = _VirPrcsEffect.RotateStep();
@@ -437,7 +514,7 @@ namespace PublicStatusIndicator.IndicatorEngine
                     break;
 
                 case EngineState.Sauron:
-                    colorSeries = _Sauron.SauronStep();
+                    colorSeries = _Sauron.SauronStep(_sauronState);
                     break;
             }
 
@@ -461,9 +538,6 @@ namespace PublicStatusIndicator.IndicatorEngine
                     break;
                 case EngineState.Bad:
                     _VirBadEffect.ResetIndex();
-                    break;
-                case EngineState.Sauron:
-                    _Sauron.SetNextMode(SauronEffect.States.Appear);
                     break;
             }
         }

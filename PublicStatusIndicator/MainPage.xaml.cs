@@ -6,13 +6,14 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using PublicStatusIndicator.IndicatorEngine;
 using PublicStatusIndicator.GUI_Elements;
+using System.Collections.Generic;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace PublicStatusIndicator
 {
     /// <summary>
-    ///     An empty page that can be used on its own or navigated to within a Frame.
+    /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
@@ -37,6 +38,8 @@ namespace PublicStatusIndicator
 
         internal App ParentApp;
 
+        public Dictionary<string, List<ProfileElement>> DefinedProfiles { get; } = new Dictionary<string, List<ProfileElement>>(); 
+
         public MainPage()
         {
             PreviewConfig = new StatusIndicator.IndicatorConfig(VIRTUAL_LEN, ROTATE_SMOOTHNESS, PULSE_VALUES);
@@ -45,6 +48,15 @@ namespace PublicStatusIndicator
             UC_FormSettings = new Settings(this, PreviewConfig);
             ActivePage = UC_ModePreview;
 
+            DefinedProfiles.Add("Summon Sauron", EngineDefines.SummonSauron);
+            DefinedProfiles.Add("Dismiss Sauron", EngineDefines.DismissSauron);
+
+            DefinedProfiles.Add("StepRight", EngineDefines.MoveHimRight);
+            DefinedProfiles.Add("StepLeft", EngineDefines.MoveHimLeft);
+
+            DefinedProfiles.Add("Appear/Disappear", EngineDefines.SauronAppearAndDisappear);
+            DefinedProfiles.Add("Blame", EngineDefines.SauronBlame);
+            
             InitializeComponent();
             DataContext = this;
 
@@ -71,11 +83,18 @@ namespace PublicStatusIndicator
         }
 
         internal event SetNewState SetNewStateByGui;
+        internal event SetNewProfile SetNewProfileByGui;
 
-
-        EngineState _cState = EngineState.Idle;
+        /// <summary>
+        /// Display-Mode
+        /// </summary>
         DisplayMode dMode = DisplayMode.Preview;
 
+        /// <summary>
+        /// translates button action to particular command
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Button_Action(object sender, RoutedEventArgs e)
         {
             var cmdButton = (Button) sender;
@@ -110,10 +129,15 @@ namespace PublicStatusIndicator
                     newState = EngineState.Sauron;
                     break;
 
+                case "RunProfile":
+                    newState = EngineState.Sauron;
+                    SetNewProfileByGui?.Invoke(   (List<ProfileElement>)SauronProfileSelect.SelectedValue );
+                    break;
+
                 case "showProfiles":
                     if (dMode == DisplayMode.Preview)
                     {
-                        dMode = DisplayMode.Settings;
+                        dMode = DisplayMode.ShowProfiles;
                         ActivePage = UC_FormSettings;
                     }
                     else
@@ -122,13 +146,9 @@ namespace PublicStatusIndicator
                         ActivePage = UC_ModePreview;
                     }
                     break;
+
                 default:
                     break;
-            }
-
-            if ((ParentApp != null) && ( ParentApp.RefreshTimer.IsEnabled != true) )
-            {
-                ParentApp.RefreshTimer.Start();
             }
 
             StatusOutput = cmdButton.Name;
@@ -141,9 +161,24 @@ namespace PublicStatusIndicator
             SetNewStateByGui?.Invoke(newState);
         }
 
+        /// <summary>
+        /// Display contend
+        /// </summary>
         enum DisplayMode
         {
+            /// <summary>
+            /// Simulates LED strip on display
+            /// </summary>
             Preview,
+
+            /// <summary>
+            /// Shows gray-scale waveforms to visualize different profiles
+            /// </summary>
+            ShowProfiles,
+
+            /// <summary>
+            /// Shows settings dialogue
+            /// </summary>
             Settings
         }
         #region PropChanged

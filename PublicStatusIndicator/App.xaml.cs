@@ -17,17 +17,18 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.System.Threading;
 
-
-
 // To use the Web-Server
 using PublicStatusIndicator.Webserver;
 using PublicStatusIndicator.ApiController;
 
+// Open Tasks
+// - Settings have to be made avilable on construction event to set up all objects dinamically to particular needs
+// - Settings have to be saved as settings file and made accesible to manipulate and save settings in order to customize the appearance of all effects
 
-// @todo VonBlank auf Idle
 namespace PublicStatusIndicator
 {
     public delegate void SetNewState(EngineState newState);
+    public delegate void SetNewProfile(List<ProfileElement> newProfile);
 
 
     /// <summary>
@@ -40,6 +41,12 @@ namespace PublicStatusIndicator
         private const int LEDSTRIP_LEN = 24;
         private const int LED_ROTATE_SMOOTHNESS  = 2;           // Rounds per second = SF * 24*40/1000 <= Hier ca. 2
         private const int LED_PULSE_VALUES = 3 * 1000/MS_TICK;  // 
+
+        // Make shure that the perepheral device is connected to the appropriate ports
+        const int DECODER_SAMPLE_TIME = 10;
+        const int DECODER_APIN = 2;
+        const int DECODER_BPIN = 3;
+        const int DECODER_SWPIN = 4;
         #endregion
 
         Frame rootFrame = Window.Current.Content as Frame;
@@ -59,32 +66,56 @@ namespace PublicStatusIndicator
 
             InitWebserver();
 
-            DirPreset = new IncrementalEncoder(LEDSTRIP_LEN);
+            DirPreset = new IncrementalEncoder(LEDSTRIP_LEN, DECODER_SAMPLE_TIME, 
+                new IncrementalEncoder.PinConfig(DECODER_APIN, DECODER_BPIN, DECODER_SWPIN));
             DirPreset.OnIncrement += DirPreset_OnEncoderStepCB;
             DirPreset.OnSwitchPressed += DirPreset_OnSwitchPressedCB;
 
             RefreshTimer = new DispatcherTimer();
             RefreshTimer.Interval = TimeSpan.FromMilliseconds(MS_TICK);
             RefreshTimer.Tick += LED_Refresh_Tick;
+            RefreshTimer.Start();
 
             DirPreset.StartSampling();
+        }
+            
+        int _showOffStep = 0;
+        private void DirPreset_OnSwitchPressedCB() // @todo hier ausbessern
+        {
+            if (_ledStrip.State == EngineState.Blank)
+            {
+                _ledStrip.SetState(EngineState.Sauron);
+            }
+            else if (_ledStrip.State == EngineState.Sauron)
+            {
+                switch (_showOffStep)
+                {
+                    case 0:
+                        _showOffStep++;
+                        //@todo hier den Mad-Aufruf bringen.
+                        break;
 
+                    default:
+                        _showOffStep = 0;
+                        _ledStrip.SetState(EngineState.Blank);
+                        break;
+                }
+            }
         }
 
-        private void DirPreset_OnSwitchPressedCB()
+        private void DirPreset_OnEncoderStepCB(int abs, int rel)
         {
-            _ledStrip.BlankAllLEDs();
-        }
-       
-        private void DirPreset_OnEncoderStepCB(int pos)
-        {
-
+            if (_ledStrip.State == EngineState.Sauron)
+            {
+                _ledStrip.SetEyePosition(abs, rel);
+            }
         }
 
         private void InitWebserver()
         {
             StatusController webStatusCtrl = new StatusController(this);
             webStatusCtrl.SetNewStateByHost += new SetNewState(ChangeState_CB);
+            webStatusCtrl.SetNewProfileByGui += new SetNewProfile(ChangeProfile_CB);
 
             RouteManager.CurrentRouteManager.Controllers.Add(webStatusCtrl);
             RouteManager.CurrentRouteManager.InitRoutes();
@@ -97,8 +128,14 @@ namespace PublicStatusIndicator
 
         public void ChangeState_CB(EngineState toState)
         {
-            _ledStrip.ChangeState(toState);
+            _ledStrip.SetState(toState);
         }
+
+        public void ChangeProfile_CB(List<ProfileElement> toProfile)
+        {
+            _ledStrip.SetProfile(toProfile);
+        }
+
 
         private void LED_Refresh_Tick(object sender, object e)
         {
@@ -157,6 +194,7 @@ namespace PublicStatusIndicator
                     {
                         // Event an die GUI verdrahten.
                         (rootFrame.Content as MainPage).SetNewStateByGui += new SetNewState(ChangeState_CB);
+                        (rootFrame.Content as MainPage).SetNewProfileByGui += new SetNewProfile(ChangeProfile_CB);
                         (rootFrame.Content as MainPage).ParentApp = this;
                     }
                 }

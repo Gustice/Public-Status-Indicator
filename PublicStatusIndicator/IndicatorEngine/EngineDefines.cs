@@ -50,6 +50,10 @@ namespace PublicStatusIndicator.IndicatorEngine
         Sauron,
     }
 
+
+
+
+
     /// <summary>
     /// Dictionary defines for strings and colors
     /// </summary>
@@ -76,5 +80,73 @@ namespace PublicStatusIndicator.IndicatorEngine
             {EngineState.Stable,    Color.FromArgb(0xFF, 0x00, 0x80, 0x00)},
             {EngineState.Sauron,    Color.FromArgb(0xFF, 0x80, 0x04, 0x00)},
         };
+
+
+        public static readonly List<ProfileElement> SummonSauron = new List<ProfileElement>
+        {
+            {new ProfileElement(EngineState.Blank,20) },
+            {new SauronProfileElement(SauronEffect.States.Appear,20) },
+            {new SauronProfileElement(SauronEffect.States.Idle,int.MaxValue) },
+        };
+        public static readonly List<ProfileElement> DismissSauron = new List<ProfileElement>
+        {
+            {new SauronProfileElement(SauronEffect.States.Disappear,20) },
+            {new ProfileElement(EngineState.Blank,int.MaxValue) },
+        };
+
+        public static readonly List<ProfileElement> MoveHimRight = new List<ProfileElement>
+        {
+            {new SauronProfileElement(SauronEffect.States.Move, 5, 1) },
+            {new SauronProfileElement(SauronEffect.States.Idle,int.MaxValue) },
+        };
+        public static readonly List<ProfileElement> MoveHimLeft = new List<ProfileElement>
+        {
+            {new SauronProfileElement(SauronEffect.States.Move, 5, -1) },
+            {new SauronProfileElement(SauronEffect.States.Idle,int.MaxValue) },
+        };
+
+        public static readonly List<ProfileElement> SauronAppearAndDisappear = new List<ProfileElement>
+        {
+            {new ProfileElement(EngineState.Blank,20) },
+            {new SauronProfileElement(SauronEffect.States.Appear,20) },
+            {new SauronProfileElement(SauronEffect.States.Idle,20) },
+            {new SauronProfileElement(SauronEffect.States.Disappear,20) },
+        };
+
+        public static readonly List<ProfileElement> SauronBlame = new List<ProfileElement>
+        {
+            {new ProfileElement(EngineState.Blank,20) },
+            {new SauronProfileElement(SauronEffect.States.Appear,20) },
+            {new SauronProfileElement(SauronEffect.States.Idle,20) },
+            {new SauronProfileElement(SauronEffect.States.Move,20,20) },
+            {new SauronProfileElement(SauronEffect.States.Mad,100) },
+            {new SauronProfileElement(SauronEffect.States.Disappear,20) },
+        };
+    }
+
+
+    public class SauronProfileElement : ProfileElement
+    {
+        public SauronEffect.States SauronState;
+        public int NewPosition;
+
+        public SauronProfileElement(SauronEffect.States subState, int duration, int newPos = 0) : base (EngineState.Sauron, duration)
+        {
+            SauronState = subState;
+            NewPosition = 0;
+        }
+    }
+
+    public class ProfileElement
+    {
+        public EngineState State;
+        public int Duration;
+
+        public ProfileElement(EngineState state, int duration)
+        {
+            State = state;
+            Duration = duration;
+            
+        }
     }
 }

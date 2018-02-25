@@ -25,7 +25,11 @@ namespace PublicStatusIndicator
         private SpiDevice _statusLedInterface;
         private readonly StatusIndicator _ledIndicator;
 
-        private EngineState _state = EngineState.Blank;
+        public EngineState State
+        {
+            get { return _ledIndicator.State; }
+        }
+
         int _numPixels;
         int _smoothness;
         int _pulsePeriode;
@@ -46,16 +50,27 @@ namespace PublicStatusIndicator
 
             InitHardware();
             _ledIndicator = new StatusIndicator(config);
-            _ledIndicator.MaxBrightnes = 0xF0;
+            _ledIndicator.MaxBrightness = 0xF0;
             _rgBring = new Color[_numPixels];
+        }
+
+        /// <summary>
+        /// Change Saurons fix point on purpose
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="rel"></param>
+        public void SetEyePosition(int num, int rel)
+        {
+            _ledIndicator.DeviateSauronsFixPoint(rel);
         }
 
         /// <summary>
         /// Event method to trigger next image of local indicator object
         /// </summary>
         public void RefreshEvent()
-        {
-            _rgBring = _ledIndicator.EffectAccordingToState(_state);
+        {// @todo has to transfered to some kind of static function which refreshes all Indicator-Objects
+            _rgBring = _ledIndicator.EffectAccordingToProfile();
+
             _leDstrip.SetAllLEDs(_rgBring);
             _leDstrip.UpdateLEDs();
         }
@@ -63,11 +78,32 @@ namespace PublicStatusIndicator
         /// <summary>
         /// Change state of local indicator object
         /// </summary>
-        /// <param name="newState"></param>
-        public void ChangeState(EngineState newState)
+        /// <param name="nextState"></param>
+        public void SetState(EngineState nextState)
         {
-            _state = newState;
+            _ledIndicator.State = nextState;
+            if (nextState == EngineState.Sauron)
+            {
+                if (_ledIndicator.Profile == null)
+                {
+                    _ledIndicator.Profile = EngineDefines.SummonSauron;
+                }
+            }
+            else
+            {
+                _ledIndicator.Profile = null;
+            }
         }
+
+        /// <summary>
+        /// Change profile (Set of states) of local indicator object
+        /// </summary>
+        /// <param name="profile"></param>
+        public void SetProfile(List<ProfileElement> profile)
+        {
+            _ledIndicator.Profile = profile;
+        }
+
 
         /// <summary>
         /// Abstraction method ot blank LEDs of peripheral object

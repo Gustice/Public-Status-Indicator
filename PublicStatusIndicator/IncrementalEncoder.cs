@@ -4,20 +4,11 @@ using Windows.UI.Xaml;
 
 namespace PublicStatusIndicator
 {
-    public delegate void IncrementPassed(int pos);
+    public delegate void IncrementPassed(int pos, int rel);
     public delegate void SwitchPressed();
 
     internal class IncrementalEncoder
     {
-        // Hardcoded configuration
-        // Make shure that the perepheral device is connected to the appropriate ports
-        #region HardCoded               
-        const int SAMPLE_TIME = 10;
-        const int APIN = 2;
-        const int BPIN = 3;
-        const int SWPIN = 4;
-        #endregion
-
         private int _value;
 
         /// <summary>
@@ -53,19 +44,23 @@ namespace PublicStatusIndicator
         GpioPin _BChannel;
         GpioPin _Switch;
 
+        PinConfig _pins;
+
         private DispatcherTimer Sampler;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="resolution">Resolution of used encoder or desired output signal</param>
-        public IncrementalEncoder(int resolution)
+        public IncrementalEncoder(int resolution, int sampleTime, PinConfig pins)
         {
             Resolution = resolution;
+            _pins = pins;
+
             InitGPIO();
 
             Sampler = new DispatcherTimer();
-            Sampler.Interval = TimeSpan.FromMilliseconds(SAMPLE_TIME);
+            Sampler.Interval = TimeSpan.FromMilliseconds(sampleTime);
             Sampler.Tick += Timer_Tick;
         }
 
@@ -98,13 +93,17 @@ namespace PublicStatusIndicator
         {
             EvalEncoderIncrement();
 
-            int sw = (int)_Switch.Read();
-
-            if ((sw == 0) && (lastSwitch == 1)) // detect falling flag
+            // only if the switch is actually in use
+            if (_pins.SW_pin != 0)
             {
-                OnSwitchPressed?.Invoke();
+                int sw = (int)_Switch.Read();
+
+                if ((sw == 0) && (lastSwitch == 1)) // detect falling flag
+                {
+                    OnSwitchPressed?.Invoke();
+                }
+                lastSwitch = sw;
             }
-            lastSwitch = sw;
         }
 
         int lastStep;
@@ -132,7 +131,7 @@ namespace PublicStatusIndicator
                 case 0xE: // 11 10
                 case 0x8: // 10 00
                     Value++;
-                    OnIncrement?.Invoke(Value);
+                    OnIncrement?.Invoke(Value,+1);
                     break;
 
                 case 0x2: // 00 10
@@ -140,7 +139,7 @@ namespace PublicStatusIndicator
                 case 0xD: // 11 01
                 case 0x4: // 01 00
                     Value--;
-                    OnIncrement?.Invoke(Value);
+                    OnIncrement?.Invoke(Value,-1);
                     break;
 
                 case 0x3: // 00 11
@@ -165,16 +164,43 @@ namespace PublicStatusIndicator
             _pinController = GpioController.GetDefault();
             try
             {
-                _AChannel = _pinController.OpenPin(APIN);
+                _AChannel = _pinController.OpenPin(_pins.A_pin);
                 _AChannel.SetDriveMode(GpioPinDriveMode.Input);
-                _BChannel = _pinController.OpenPin(BPIN);
+                _BChannel = _pinController.OpenPin(_pins.B_pin);
                 _BChannel.SetDriveMode(GpioPinDriveMode.Input);
-                _Switch = _pinController.OpenPin(SWPIN);
-                _Switch.SetDriveMode(GpioPinDriveMode.Input);
+
+                if (_pins.SW_pin != 0)
+                {
+                    _Switch = _pinController.OpenPin(_pins.SW_pin);
+                    _Switch.SetDriveMode(GpioPinDriveMode.Input);
+                }
             }
             catch (System.Exception)
             {
                 throw new System.Exception("There appearts to be a GPIO-Port missing or is already used");
+            }
+        }
+
+        /// <summary>
+        /// Pin configuration object for quadrature encoder with optional switches
+        /// </summary>
+        public class PinConfig
+        {
+            public int A_pin;
+            public int B_pin;
+            public int SW_pin;
+
+            /// <summary>
+            /// Constructor
+            /// </summary>
+            /// <param name="A">A-channel of encoder</param>
+            /// <param name="B">B-channel of encoder</param>
+            /// <param name="SW">Switch of encoder. Leave =0 if no switch wired</param>
+            public PinConfig(int A, int B, int SW = 0)
+            {
+                A_pin = A;
+                B_pin = B;
+                SW_pin = SW;
             }
         }
     }

@@ -40,10 +40,18 @@ namespace PublicStatusIndicator.GUI_Elements
         /// </summary>
         public PlotModel PulsePlot { get; set; }
 
-
+        /// <summary>
+        /// Plot model to display Saurons moves
+        /// </summary>
         public PlotModel MovePlot { get; set; }
 
+        const int NORM_MAX = 100;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="parent"></param>
+        /// <param name="config"></param>
         public Settings(MainPage parent, StatusIndicator.IndicatorConfig config)
         {
             ParentPage = parent;
@@ -57,11 +65,12 @@ namespace PublicStatusIndicator.GUI_Elements
             int[] blaze_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.SauronsAurora);
             int[] fire_GryTemp = ConverteColor2NormalizedGrayvalues(_virtualIndicator.SauronsFire);
 
+            // Normalize Saurons graphs to different maximum values
             for (int j = 0; j < sauron_GryTemp.Length; j++)
             {
-                sauron_GryTemp[j] = sauron_GryTemp[j] * 80 / 100;
-                blaze_GryTemp [j] = blaze_GryTemp [j] * 20 / 100;
-                fire_GryTemp[j] = fire_GryTemp[j] * 50 / 100;
+                sauron_GryTemp[j] = sauron_GryTemp[j] * 80 / NORM_MAX;
+                blaze_GryTemp [j] = blaze_GryTemp [j] * 20 / NORM_MAX;
+                fire_GryTemp[j] = fire_GryTemp[j] * 50 / NORM_MAX;
             }
 
             // Display all rotated effects in according plot-model
@@ -94,12 +103,14 @@ namespace PublicStatusIndicator.GUI_Elements
             int[] fMove = new int[100];
 
             i = 0;
-            fMove[i] = moves.ChangeFixPoint(30);
+            moves.ChangeFixPoint(30);
+            fMove[i] = moves.MoveToFixPoint();
             for (i++; i < fMove.Length/2; i++)
-                fMove[i] = moves.ChangeFixPoint();
-            fMove[i] = moves.ChangeFixPoint(-60);
+                fMove[i] = moves.MoveToFixPoint();
+            moves.ChangeFixPoint(-60);
+            fMove[i] = moves.MoveToFixPoint();
             for (i++; i < fMove.Length; i++)
-                fMove[i] = moves.ChangeFixPoint();
+                fMove[i] = moves.MoveToFixPoint();
 
             MovePlot = CreatePlotModel(nMove, "Move Effect", "Nervous Dither", OxyColors.Yellow);
             Add2PlotModel(MovePlot, fMove, "Random Fixpoint", OxyColors.Orange);
@@ -161,7 +172,6 @@ namespace PublicStatusIndicator.GUI_Elements
             plot.Series.Add(seriesRaw);
         }
 
-        const int NORM_MAX = 100;
         /// <summary>
         /// Converts colored waveform into grayscale values. Normalizes output to given maximum.
         /// </summary>

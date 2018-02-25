@@ -19,6 +19,7 @@ namespace PublicStatusIndicator.ApiController
         }
 
         public event SetNewState SetNewStateByHost;
+        public event SetNewProfile SetNewProfileByGui;
 
         [Route("/StatusController/Blank")]
         public async Task<HttpResponseMessage> Blank()
@@ -90,10 +91,13 @@ namespace PublicStatusIndicator.ApiController
         }
 
 
+
         [Route("/StatusController/SummonSauron")]
         public async Task<HttpResponseMessage> SummonSauron()
         {
-            throw new NotImplementedException();
+            SetNewStateByHost?.Invoke(EngineState.Unstable);
+            SetNewProfileByGui?.Invoke(EngineDefines.SummonSauron);
+
             return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
         }
 
@@ -104,28 +108,28 @@ namespace PublicStatusIndicator.ApiController
             return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
         }
 
-        [Route("/StatusController/OrderSauronToBlame")]
+        [Route("/StatusController/OrderSauronToBlame")] // @todo: Coords for Blame-Position have to be transfered too
         public async Task<HttpResponseMessage> SauronBlame()
         {
             throw new NotImplementedException();
             return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
         }
 
-        [Route("/StatusController/UpsetSauron")]
-        public async Task<HttpResponseMessage> UpsetSauron()
+        [Route("/StatusController/MoveRightBy")]    // @todo 
+        public async Task<HttpResponseMessage> MoveSauronRight()
         {
             throw new NotImplementedException();
             return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
         }
 
-        [Route("/StatusController/TeachSauron")]
-        public async Task<HttpResponseMessage> TeachSauron()
+        [Route("/StatusController/MoveLeftBy")]     // @todo 
+        public async Task<HttpResponseMessage> MoveSauronLeft()
         {
             throw new NotImplementedException();
             return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
         }
 
-        [Route("/StatusController/AskSauronForCoords")]
+        [Route("/StatusController/AskSauronForCoords")] // @todo Coords for Blame-Position have to be returned
         public async Task<HttpResponseMessage> AskSauronForCoords()
         {
             throw new NotImplementedException();

@@ -3,7 +3,7 @@ using Windows.UI;
 
 namespace PublicStatusIndicator.IndicatorEngine
 {
-    internal class SauronEffect
+    public class SauronEffect
     {
         #region HardCoded
         const int DITHER_INTEVAL = 25 / 2;    // All x frames the eye could slightly move
@@ -23,14 +23,14 @@ namespace PublicStatusIndicator.IndicatorEngine
 
         int _targetLen;
         int _maxIndex;
-        int _reduceFactor;
+        int _reductionFactor;
 
         Color[] EyeSrc;
         Color[] BlazeEnvelope;
         Color[] FireEnvelope;
         Color[] TempOut;
 
-        BoundedInt _R_Idx;
+        public BoundedInt R_Idx { get; set; }
 
         SauronHabits Habits;
 
@@ -43,7 +43,7 @@ namespace PublicStatusIndicator.IndicatorEngine
 
 
             _maxIndex = template.Iris.Length;
-            _reduceFactor = _maxIndex / _targetLen;
+            _reductionFactor = _maxIndex / _targetLen;
 
             TempOut = new Color[target.Length];
 
@@ -53,65 +53,48 @@ namespace PublicStatusIndicator.IndicatorEngine
                 );
 
 
-            _R_Idx = new BoundedInt(0, _maxIndex-1);
+            R_Idx = new BoundedInt(0, _maxIndex-1);
         }
 
-        States step = States.Appear;
 
         int _Intensity = 0;
         const int DELTA_INTESITY = 5;
         const int MAX_INTESITY = 100;
 
-        int stateCnt = 0;
-        public Color[] SauronStep()
+        public Color[] SauronStep(States state)
         {
 
-            switch (step)
+            switch (state)
             {
                 case States.Appear:
                     _Intensity += DELTA_INTESITY;
                     if (_Intensity >= MAX_INTESITY)
                     {
                         _Intensity = MAX_INTESITY;
-                        step = States.Idle;
-                        stateCnt = 0;
                     }
-                    DisplayBlazingSpot(_Intensity);
+
+                    BlazingSpot(_Intensity);
                     break;
 
                 case States.Idle:
+                    relIdx = R_Idx.Value;
+                    BlazingSpot(_Intensity);
+                    break;
+
+                case States.Nervous:
                     // Dither direction ocasionally
-                    relIdx = _R_Idx.RelativeTo(Habits.DitherEyeRandomly());
-                    stateCnt++;
-                    if (stateCnt >= 30)
-                    {
-                        step = States.Move;
-                        stateCnt = 0;
-                        relIdx = Habits.ChangeFixPoint(20, EYE_MOVE_FAST);
-                    }
-                    DisplayBlazingSpot(_Intensity);
+                    relIdx = R_Idx.RelativeTo(Habits.DitherEyeRandomly());
+                    BlazingSpot(_Intensity);
                     break;
 
                 case States.Move:
-                    relIdx = Habits.ChangeFixPoint();
-                    stateCnt++;
-                    if (stateCnt >= 30)
-                    {
-                        step = States.Mad;
-                        _madState = 0;
-                        stateCnt = 0;
-                    }
-                    DisplayBlazingSpot(_Intensity);
+                    relIdx = Habits.MoveToFixPoint();
+
+                    BlazingSpot(_Intensity);
                     break;
 
                 case States.Mad:
                     DisplayMadSauron();
-                    stateCnt++;
-                    if (stateCnt >= 5*25)
-                    {
-                        step = States.Disappear;
-                        stateCnt = 0;
-                    }
                     break;
 
                 case States.Disappear:
@@ -119,10 +102,8 @@ namespace PublicStatusIndicator.IndicatorEngine
                     if (_Intensity <= 0)
                     {
                         _Intensity = 0;
-                        step = States.Random;
-                        stateCnt = 0;
                     }
-                    DisplayBlazingSpot(_Intensity);
+                    BlazingSpot(_Intensity);
                     break;
 
                 case States.Random:
@@ -132,8 +113,37 @@ namespace PublicStatusIndicator.IndicatorEngine
             return TempOut;
         }
 
+        public void ChangeFixPointTo(int absPos, int duration)
+        {
+            Habits.ChangeFixPoint(20, duration);
+        }
+
+        public void ChangeFixPointBy(int delta, int duration)
+        {
+
+        }
+
+
+
+        private void EyeSpot(int intens)
+        {
+            int sIdx = R_Idx.Value;
+            // Display Blazing Spot
+            for (int i = 0; i < _targetLen; i++)
+            {
+                TempOut[i] = EyeSrc[sIdx];
+
+                TempOut[i].R = (byte)((int)TempOut[i].R * intens / MAX_INTESITY);
+                TempOut[i].G = (byte)((int)TempOut[i].G * intens / MAX_INTESITY);
+                TempOut[i].B = (byte)((int)TempOut[i].B * intens / MAX_INTESITY);
+
+                sIdx += _reductionFactor;
+                sIdx = CorrectIndexToRing(sIdx);
+            }
+        }
+
         int relIdx = 0;
-        private void DisplayBlazingSpot(int intens)
+        private void BlazingSpot(int intens)
         {
             // Display Blazing Spot
             for (int i = 0; i < _targetLen; i++)
@@ -149,12 +159,10 @@ namespace PublicStatusIndicator.IndicatorEngine
                 TempOut[i].B = (byte)(TempOut[i].B + (byte)(_blazeingP.Next(0, BlazeEnvelope[relIdx].B)));
                 TempOut[i].B = (byte)((int)TempOut[i].B * intens / MAX_INTESITY);
 
-                relIdx += _reduceFactor;
+                relIdx += _reductionFactor;
                 relIdx = CorrectIndexToRing(relIdx);
             }
         }
-
-
 
         int _madState = 0;
         int _madWhaitCnt = 0;
@@ -168,7 +176,6 @@ namespace PublicStatusIndicator.IndicatorEngine
             switch (_madState)
             {
                 case 0:
-
                     _FireIntensity = (float)Math.Exp((float)_madWhaitCnt/3)-1;
                     if (_FireIntensity >= MAX_FIRE_INTENS)
                     {
@@ -232,16 +239,9 @@ namespace PublicStatusIndicator.IndicatorEngine
                 TempOut[i].G = (byte)(burn * hBurn / 8 + eye * _FireIntensity / MAX_FIRE_INTENS + blaze);
                 TempOut[i].B = (byte)(eye * _FireIntensity / MAX_FIRE_INTENS / 3);
 
-                relIdx += _reduceFactor;
+                relIdx += _reductionFactor;
                 relIdx = CorrectIndexToRing(relIdx);
             }
-        }
-
-
-        //States _nextState = States.Appear;
-        public void SetNextMode(States next)
-        {
-            step = next;
         }
 
         /// <summary>
@@ -319,6 +319,11 @@ namespace PublicStatusIndicator.IndicatorEngine
             /// Make nothing special
             /// </summary>
             Idle,
+
+            /// <summary>
+            /// Dither around fixpoint
+            /// </summary>
+            Nervous,
         }
     }
 
@@ -365,12 +370,16 @@ namespace PublicStatusIndicator.IndicatorEngine
         /// <param name="deltaPhi"></param>
         /// <param name="velocity"></param>
         /// <returns></returns>
-        public int ChangeFixPoint(int deltaPhi = 0, int velocity = 0)
+        public void ChangeFixPoint(int deltaPhi = 0, int velocity = 0)
         {
             if (deltaPhi != 0)
             {
                 Curious.InitNewMove(deltaPhi, velocity);
             }
+        }
+
+        public int MoveToFixPoint()
+        {
             return Curious.MovingStep();
         }
 
@@ -616,58 +625,72 @@ namespace PublicStatusIndicator.IndicatorEngine
     }
 
 
-
-    // @todo: This class has to be tested properly
-    class BoundedInt
+    /// <summary>
+    /// Boundend Value class. Creates Value which maintaines its own constraines during addition of values.
+    /// </summary>
+    public class BoundedInt
     {
         int _min;
         int _max;
 
         private int _val;
+        /// <summary>
+        /// Bounded Value
+        /// </summary>
         public int Value
         {
             get { return _val; }
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
         public BoundedInt(int min, int max)
         {
             _min = min;
             _max = max;
         }
 
-        public int RelativeTo(int a)
+        /// <summary>
+        /// Gives relative position to current value.
+        /// </summary>
+        /// <param name="delta"></param>
+        /// <returns></returns>
+        public int RelativeTo(int delta)
         {
             // In case this Value is much greater then allowed range
-            a = a % (_max - _min);
+            delta = delta % (_max - _min);
             int temp = _val;
 
-            if (a > 0)
+            if (delta > 0) // if a is positive
             {
-                temp += a;
-
+                temp += delta;
                 if (temp > _max)
                 {
                     temp -= (_max-_min);
                 }
             }
-            else
+            else // if a is negative
             {
-                if (-a > temp)
+                temp += delta;
+                if(temp < _min)
                 {
-                    temp += a;
-
-                    if(temp < _min)
-                    {
-                        temp += (_max - _min);
-                    }
+                    temp += (_max - _min);
                 }
             }
             return temp;
         }
 
-        public int Add(int a)
+        /// <summary>
+        /// Adds Delta to current value.
+        /// </summary>
+        /// <param name="delta"></param>
+        /// <returns></returns>
+        public int Add(int delta)
         {
-            _val = RelativeTo(a);
+            _val = RelativeTo(delta);
             return _val;
         }
 

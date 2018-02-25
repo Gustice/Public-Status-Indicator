@@ -46,8 +46,6 @@ namespace PublicStatusIndicator.GUI_Elements
 
         MainPage ParentPage;
 
-        private EngineState _state = EngineState.Idle;
-
         public Preview(MainPage parent, StatusIndicator.IndicatorConfig config)
         {
             _virtualRing = new Color[config.TargetPixels];
@@ -62,15 +60,15 @@ namespace PublicStatusIndicator.GUI_Elements
 
         public void RefreshPage()
         {
-            _virtualRing = _virtualIndicator.EffectAccordingToState(_state);
+            _virtualRing = _virtualIndicator.EffectAccordingToState();
             _displayRing.SetAllVaules(_virtualRing);
         }
 
         public void ChangeState(EngineState newState)
         {
-            _state = newState;
-            StatusOutput = EngineDefines.StateOutputs[_state];
-            CenterColor = new SolidColorBrush(EngineDefines.StateColors[_state]);
+            _virtualIndicator.State = newState;
+            StatusOutput = EngineDefines.StateOutputs[newState];
+            CenterColor = new SolidColorBrush(EngineDefines.StateColors[newState]);
         }
 
         #region PropChanged

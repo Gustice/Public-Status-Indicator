@@ -104,6 +104,41 @@ namespace PublicStatusIndicator
             _ledIndicator.Profile = profile;
         }
 
+        /// <summary>
+        /// Set a Sauron-BlameProfile
+        /// </summary>
+        /// <param name="newPos"></param>
+        public void SetBlameProfile(float newPos)
+        {
+            int pos;
+            int len;
+            _ledIndicator.GetSauronsFixPointToLength(out pos, out len);
+
+            // Determine Blame position from relativ position
+            int BalemPos = (int)(newPos * len);
+
+            // Start allways about 140° away from demanded blame position (for sake of effect)
+            int PosAtStart = BalemPos - (int)((float)len * 0.4);
+
+            // First look nervously around demanded blame position (for sake of effect)
+            int NevDelta = (int)((float)len * 0.05);
+
+            _ledIndicator.Profile = EngineDefines.PrepareSauronBlameScript(PosAtStart, NevDelta, BalemPos);
+        }
+
+        /// <summary>
+        /// Returns relative Value of current fixpoint position of sauron (Teach-Mode)
+        /// 100 % = 1 represents the avilable ranges
+        /// </summary>
+        /// <returns></returns>
+        public float GetFixPointPosition()
+        {
+            int pos;
+            int len;
+            _ledIndicator.GetSauronsFixPointToLength(out pos, out len);
+
+            return (float)pos /len;
+        }
 
         /// <summary>
         /// Abstraction method ot blank LEDs of peripheral object

@@ -51,9 +51,6 @@ namespace PublicStatusIndicator.IndicatorEngine
     }
 
 
-
-
-
     /// <summary>
     /// Dictionary defines for strings and colors
     /// </summary>
@@ -105,12 +102,11 @@ namespace PublicStatusIndicator.IndicatorEngine
             {new SauronProfileElement(SauronEffect.States.Idle,int.MaxValue) },
         };
 
-        public static readonly List<ProfileElement> SauronAppearAndDisappear = new List<ProfileElement>
+        public static readonly List<ProfileElement> NervousSuaron = new List<ProfileElement>
         {
             {new ProfileElement(EngineState.Blank,20) },
             {new SauronProfileElement(SauronEffect.States.Appear,20) },
-            {new SauronProfileElement(SauronEffect.States.Idle,20) },
-            {new SauronProfileElement(SauronEffect.States.Disappear,20) },
+            {new SauronProfileElement(SauronEffect.States.Nervous,int.MaxValue) },
         };
 
         public static readonly List<ProfileElement> SauronBlame = new List<ProfileElement>
@@ -122,31 +118,82 @@ namespace PublicStatusIndicator.IndicatorEngine
             {new SauronProfileElement(SauronEffect.States.Mad,100) },
             {new SauronProfileElement(SauronEffect.States.Disappear,20) },
         };
-    }
 
 
-    public class SauronProfileElement : ProfileElement
-    {
-        public SauronEffect.States SauronState;
-        public int NewPosition;
-
-        public SauronProfileElement(SauronEffect.States subState, int duration, int newPos = 0) : base (EngineState.Sauron, duration)
+        static public List<ProfileElement> PrepareSauronBlameScript(int startPos, int delta, int blamePos)
         {
-            SauronState = subState;
-            NewPosition = 0;
+            List<ProfileElement> SauronBlameProfile = new List<ProfileElement>
+            {
+                { new ProfileElement(EngineState.Blank, 10) },
+                { new SauronProfileElement(SauronEffect.States.Move, 5, startPos) },
+                { new SauronProfileElement(SauronEffect.States.Appear, 20) },
+                { new SauronProfileElement(SauronEffect.States.Idle, 5) },
+                { new SauronProfileElement(SauronEffect.States.Move, 5, startPos+delta) },
+                { new SauronProfileElement(SauronEffect.States.Idle, 5) },
+                { new SauronProfileElement(SauronEffect.States.Move, 5, startPos-delta) },
+                { new SauronProfileElement(SauronEffect.States.Idle, 5) },
+                { new SauronProfileElement(SauronEffect.States.Move, 10, blamePos) },
+                { new SauronProfileElement(SauronEffect.States.Mad, 100) },
+                { new SauronProfileElement(SauronEffect.States.Disappear, 20) },
+            };
+            return SauronBlameProfile;
         }
     }
 
+    /// <summary>
+    /// Sauron profile element for batch-execution of state-definitions
+    /// </summary>
+    public class SauronProfileElement : ProfileElement
+    {
+        /// <summary>
+        /// Demanded Sauron substate.
+        /// Higher level State will be set automatically to Sauron-State.
+        /// </summary>
+        public SauronEffect.States SauronState;
+
+        /// <summary>
+        /// Demanded Position in case of movement
+        /// </summary>
+        public int NewPosition;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="subState"></param>
+        /// <param name="duration"></param>
+        /// <param name="newPos"></param>
+        public SauronProfileElement(SauronEffect.States subState, int duration, int newPos = 0) : base(EngineState.Sauron, duration)
+        {
+            SauronState = subState;
+            NewPosition = newPos;
+        }
+    }
+
+    /// <summary>
+    /// Profile element for batch-execution of state-definitions
+    /// </summary>
     public class ProfileElement
     {
+        /// <summary>
+        /// Demanded state
+        /// </summary>
         public EngineState State;
+
+        /// <summary>
+        /// Demanded duration of state
+        /// </summary>
         public int Duration;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="state"></param>
+        /// <param name="duration"></param>
         public ProfileElement(EngineState state, int duration)
         {
             State = state;
             Duration = duration;
-            
+
         }
     }
 }

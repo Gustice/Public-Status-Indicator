@@ -54,7 +54,7 @@ namespace PublicStatusIndicator
             DefinedProfiles.Add("StepRight", EngineDefines.MoveHimRight);
             DefinedProfiles.Add("StepLeft", EngineDefines.MoveHimLeft);
 
-            DefinedProfiles.Add("Appear/Disappear", EngineDefines.SauronAppearAndDisappear);
+            DefinedProfiles.Add("NervousSauron", EngineDefines.NervousSuaron);
             DefinedProfiles.Add("Blame", EngineDefines.SauronBlame);
             
             InitializeComponent();
@@ -76,7 +76,6 @@ namespace PublicStatusIndicator
             set { _centerColor = value; NotifyPropertyChanged(); }
         }
 
-
         public void RefreshEvent()
         {
             (UC_ModePreview as Preview).RefreshPage();
@@ -84,6 +83,9 @@ namespace PublicStatusIndicator
 
         internal event SetNewState SetNewStateByGui;
         internal event SetNewProfile SetNewProfileByGui;
+        internal event SetPropotionalValue SetBlamePosition;
+        internal event GetProportianalValue GetFixPointPosition;
+        internal event IncrementPassed OnIncrement;
 
         /// <summary>
         /// Display-Mode
@@ -91,11 +93,12 @@ namespace PublicStatusIndicator
         DisplayMode dMode = DisplayMode.Preview;
 
         /// <summary>
-        /// translates button action to particular command
+        /// Translates button action to particular command
+        /// Simple states will be displayed
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Button_Action(object sender, RoutedEventArgs e)
+        private void SimpleState_Action(object sender, RoutedEventArgs e)
         {
             var cmdButton = (Button) sender;
             EngineState newState = EngineState.Blank;
@@ -125,15 +128,6 @@ namespace PublicStatusIndicator
                     newState = EngineState.Stable;
                     break;
 
-                case "testSauron":
-                    newState = EngineState.Sauron;
-                    break;
-
-                case "RunProfile":
-                    newState = EngineState.Sauron;
-                    SetNewProfileByGui?.Invoke(   (List<ProfileElement>)SauronProfileSelect.SelectedValue );
-                    break;
-
                 case "showProfiles":
                     if (dMode == DisplayMode.Preview)
                     {
@@ -159,6 +153,60 @@ namespace PublicStatusIndicator
 
             // Tell App that stet is changed
             SetNewStateByGui?.Invoke(newState);
+        }
+
+
+        /// <summary>
+        /// Translates button action to particular command
+        /// Simple states will be displayed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SauronState_Action(object sender, RoutedEventArgs e)
+        {
+            var cmdButton = (Button)sender;
+            EngineState newState = EngineState.Blank;
+            switch (cmdButton.Name)
+            {
+                case "RunProfile":
+                    SetNewProfileByGui?.Invoke((List<ProfileElement>)SauronProfileSelect.SelectedValue);
+                    break;
+
+                case "TestSauronBlame":
+                    float relativePosition = (float)(RelativeBlamePosition.Value / RelativeBlamePosition.Maximum);
+                    SetBlamePosition?.Invoke(relativePosition);
+                    break;
+
+                case "GetCurrentFixPoint":
+                    float? ret = GetFixPointPosition?.Invoke();
+                    if (ret != null)
+                    {
+                        int pos = (int)(ret * 100) ;
+                        DirektionDisplay.Text = pos.ToString();
+                    }
+                    break;
+
+                case "SetFixPointTo":
+
+                    break;
+
+                case "SetFixPointLeft":
+                    OnIncrement?.Invoke(0, 1);
+                    break;
+
+                case "SetFixPointRight":
+                    OnIncrement?.Invoke(0, -1);
+                    break;
+
+                default:
+                    break;
+            }
+
+            StatusOutput = "Sauron";
+            CenterColor = new SolidColorBrush(EngineDefines.StateColors[EngineState.Sauron]);
+
+            // Tell GUI that state is changed
+            (UC_ModePreview as Preview).ChangeState(newState);
         }
 
         /// <summary>

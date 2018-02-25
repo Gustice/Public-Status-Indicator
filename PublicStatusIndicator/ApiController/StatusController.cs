@@ -21,6 +21,9 @@ namespace PublicStatusIndicator.ApiController
         public event SetNewState SetNewStateByHost;
         public event SetNewProfile SetNewProfileByGui;
 
+        public event SetPropotionalValue SetBlamePosition;
+        public event GetProportianalValue GetFixPointPosition;
+
         [Route("/StatusController/Blank")]
         public async Task<HttpResponseMessage> Blank()
         {
@@ -108,10 +111,13 @@ namespace PublicStatusIndicator.ApiController
             return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
         }
 
+
         [Route("/StatusController/OrderSauronToBlame")] // @todo: Coords for Blame-Position have to be transfered too
         public async Task<HttpResponseMessage> SauronBlame()
         {
             throw new NotImplementedException();
+            SetBlamePosition?.Invoke(0);
+
             return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
         }
 
@@ -133,6 +139,8 @@ namespace PublicStatusIndicator.ApiController
         public async Task<HttpResponseMessage> AskSauronForCoords()
         {
             throw new NotImplementedException();
+            float? pos = GetFixPointPosition?.Invoke();
+
             return await Ok(EngineDefines.StateOutputs[EngineState.Sauron]);
         }
     }

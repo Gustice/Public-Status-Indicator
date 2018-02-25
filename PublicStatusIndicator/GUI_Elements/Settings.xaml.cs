@@ -91,7 +91,8 @@ namespace PublicStatusIndicator.GUI_Elements
 
             SauronHabits moves = new SauronHabits(
                 new SauronHabits.NervousEye.Config() { Interval = 5, Section = 1},
-                new SauronHabits.CuriousEye.Config() { Interval = 20, Section = 30, Duration = 40}
+                new SauronHabits.CuriousEye.Config() { Interval = 20, Section = 30, Duration = 40},
+                new SauronHabits.BlinkyEye.Config() { Interval = 40,  Duration = 6}
                 );
 
             int[] nMove = new int[100];
@@ -102,15 +103,18 @@ namespace PublicStatusIndicator.GUI_Elements
             }
             int[] fMove = new int[100];
 
+            EyeMovement eyMove = new EyeMovement();
+
+
             i = 0;
-            moves.ChangeFixPoint(30);
-            fMove[i] = moves.MoveToFixPoint();
+            eyMove.InitNewMove(30,40);
+            fMove[i] = eyMove.MovingStep();
             for (i++; i < fMove.Length/2; i++)
-                fMove[i] = moves.MoveToFixPoint();
-            moves.ChangeFixPoint(-60);
-            fMove[i] = moves.MoveToFixPoint();
+                fMove[i] = eyMove.MovingStep();
+            eyMove.InitNewMove(-60,40);
+            fMove[i] = eyMove.MovingStep();
             for (i++; i < fMove.Length; i++)
-                fMove[i] = moves.MoveToFixPoint();
+                fMove[i] = eyMove.MovingStep();
 
             MovePlot = CreatePlotModel(nMove, "Move Effect", "Nervous Dither", OxyColors.Yellow);
             Add2PlotModel(MovePlot, fMove, "Random Fixpoint", OxyColors.Orange);

@@ -106,9 +106,12 @@
       <DependentUpon>Settings.xaml</DependentUpon>
     </Compile>
     <Compile Include="IncrementalEncoder.cs" />
+    <Compile Include="IndicatorEngine\Effects\BoundedInt.cs" />
     <Compile Include="IndicatorEngine\Effects\Effect_Memory.cs" />
+    <Compile Include="IndicatorEngine\Effects\EyeMovement.cs" />
     <Compile Include="IndicatorEngine\Effects\PulseEffect.cs" />
     <Compile Include="IndicatorEngine\Effects\RotateEffect.cs" />
+    <Compile Include="IndicatorEngine\Effects\SauronHabits.cs" />
     <Compile Include="IndicatorEngine\EngineDefines.cs" />
     <Compile Include="IndicatorEngine\Effects\SauronEffect.cs" />
     <Compile Include="IndicatorEngine\StatusIndicator.cs" />
@@ -169,9 +172,7 @@
       <Name>Windows IoT Extensions for the UWP</Name>
     </SDKReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="IndicatorEngine\Effects\Sauron\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

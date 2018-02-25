@@ -30,6 +30,9 @@ namespace PublicStatusIndicator
     public delegate void SetNewState(EngineState newState);
     public delegate void SetNewProfile(List<ProfileElement> newProfile);
 
+    public delegate void SetPropotionalValue(float pos);
+    public delegate float GetProportianalValue();
+
 
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
@@ -111,13 +114,16 @@ namespace PublicStatusIndicator
             }
         }
 
+
         private void InitWebserver()
         {
             StatusController webStatusCtrl = new StatusController(this);
             webStatusCtrl.SetNewStateByHost += new SetNewState(ChangeState_CB);
             webStatusCtrl.SetNewProfileByGui += new SetNewProfile(ChangeProfile_CB);
+            webStatusCtrl.SetBlamePosition += new SetPropotionalValue(SetBlamePosition_CB);
+            webStatusCtrl.GetFixPointPosition += new GetProportianalValue(ReturnCurrentFixPointPosition);
 
-            RouteManager.CurrentRouteManager.Controllers.Add(webStatusCtrl);
+        RouteManager.CurrentRouteManager.Controllers.Add(webStatusCtrl);
             RouteManager.CurrentRouteManager.InitRoutes();
             var asyncAction = ThreadPool.RunAsync(workItem =>
             {
@@ -134,6 +140,16 @@ namespace PublicStatusIndicator
         public void ChangeProfile_CB(List<ProfileElement> toProfile)
         {
             _ledStrip.SetProfile(toProfile);
+        }
+
+        public void SetBlamePosition_CB(float BlamePos)
+        {
+            _ledStrip.SetBlameProfile(BlamePos);
+        }
+
+        public float ReturnCurrentFixPointPosition()
+        {
+            return _ledStrip.GetFixPointPosition();
         }
 
 
@@ -195,6 +211,11 @@ namespace PublicStatusIndicator
                         // Event an die GUI verdrahten.
                         (rootFrame.Content as MainPage).SetNewStateByGui += new SetNewState(ChangeState_CB);
                         (rootFrame.Content as MainPage).SetNewProfileByGui += new SetNewProfile(ChangeProfile_CB);
+                        (rootFrame.Content as MainPage).SetBlamePosition += new SetPropotionalValue(SetBlamePosition_CB);
+                        (rootFrame.Content as MainPage).GetFixPointPosition += new GetProportianalValue(ReturnCurrentFixPointPosition);
+                        (rootFrame.Content as MainPage).OnIncrement += DirPreset_OnEncoderStepCB;
+
+
                         (rootFrame.Content as MainPage).ParentApp = this;
                     }
                 }

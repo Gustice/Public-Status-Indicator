@@ -182,7 +182,13 @@ namespace PublicStatusIndicator.IndicatorEngine
 
         public void DeviateSauronsFixPoint(int delta)
         {
-            _Sauron.R_Idx.Add(delta);
+            _Sauron.FixPnt.Add(delta);
+        }
+
+        public void GetSauronsFixPointToLength(out int pos, out int max)
+        {
+            pos = _Sauron.FixPnt.Value;
+            max = SauronsTemplates.Iris.Length;
         }
 
         /// <summary>
@@ -351,9 +357,11 @@ namespace PublicStatusIndicator.IndicatorEngine
             return tempplate;
         }
 
-
-
         private EngineState _state = EngineState.Blank;
+        /// <summary>
+        /// State container.
+        /// If manipulated different related variables are initiated.
+        /// </summary>
         public EngineState State
         {
             get { return _state; }
@@ -368,18 +376,32 @@ namespace PublicStatusIndicator.IndicatorEngine
         }
 
         private List<ProfileElement> _profile = null;
+        /// <summary>
+        /// Profile container. 
+        /// Profile is a batch of states which can be processed successively.
+        /// If manipulated duratoin counter and index are reseted.
+        /// </summary>
         public List<ProfileElement> Profile
         {
             get { return _profile; }
             set {
                 _profile = value;
-                profileCnt = 0;
+                durationCnt = 0;
                 ProfileIdx = 0;
+
+                if (_profile != null)
+                {
+                    State = _profile[0].State;
+                }
             }
         }
 
         private int _profileIdx = 0;
 
+        /// <summary>
+        /// Index to active state in profile (batch of states).
+        /// If manipulated related init-routines may be executed.
+        /// </summary>
         public int ProfileIdx
         {
             get { return _profileIdx; }
@@ -395,7 +417,11 @@ namespace PublicStatusIndicator.IndicatorEngine
                         if (_sauronState == SauronEffect.States.Move)
                         {
                             SauronProfileElement temp = (SauronProfileElement)_profile[ProfileIdx];
-                            _Sauron.ChangeFixPointTo(temp.NewPosition, temp.Duration);
+                            _Sauron.InitMoveToFixPoint(temp.NewPosition, temp.Duration);
+                        }
+                        else if (_sauronState == SauronEffect.States.Mad)
+                        {
+                            _Sauron.ReinitMadMode();
                         }
                     }
                 }
@@ -411,29 +437,32 @@ namespace PublicStatusIndicator.IndicatorEngine
         private EngineState _fadingState;
         private EngineState _lastState = EngineState.Blank;
 
-        int profileCnt = 0;
+        int durationCnt = 0;
+        /// <summary>
+        /// Profile-Execution.
+        /// A batch of states is processed successively 
+        /// </summary>
+        /// <returns></returns>
         public Color[] EffectAccordingToProfile()
         {
             Color[] tempReturn;
 
             if (_profile != null)
             {
-                var type = _profile[ProfileIdx].GetType();
-                if (type == typeof(SauronProfileElement) )  
+                durationCnt++;
+                if (durationCnt > _profile[ProfileIdx].Duration)
                 {
-                    _sauronState = ((SauronProfileElement)_profile[ProfileIdx]).SauronState;
-                }
-                State = _profile[ProfileIdx].State;
-
-                profileCnt++;
-                if (profileCnt >= _profile[ProfileIdx].Duration)
-                {
-                    profileCnt = 0;
+                    durationCnt = 0;
                     ProfileIdx++;
                     if (ProfileIdx >= _profile.Count)
                     {
                         ProfileIdx = 0;
                         _profile = null;
+                    }
+                    else
+                    {
+                        // Conserve last valid state
+                        State = _profile[ProfileIdx].State;
                     }
                 }
                 tempReturn = EffectAccordingToState();
@@ -569,6 +598,5 @@ namespace PublicStatusIndicator.IndicatorEngine
                 PulseImages = pulseLength;
             }
         }
-
     }
 }

@@ -13,12 +13,19 @@
         <Style x:Name="style_Button" TargetType="Button">
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="VerticalAlignment" Value="Stretch"/>
-            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Margin" Value="5"/>
             <Setter Property="FontSize" Value="22"/>
             <Setter Property="FontWeight" Value="Bold"/>
         </Style>
+
+        <Style x:Name="style_SmallButton" TargetType="Button">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="Margin" Value="5,0"/>
+            <Setter Property="FontSize" Value="20"/>
+        </Style>
     </Page.Resources>
-    
+
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="480" />
@@ -30,17 +37,17 @@
 
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
                 <RowDefinition Height="auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="20" />
                 <RowDefinition Height="auto" />
-                <RowDefinition Height="auto" />
-                <RowDefinition Height="20" />
+                <RowDefinition Height="*" />
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="Set to ..." FontSize="28"/>
+            <TextBlock Grid.Row="0" Text="Set to ..." FontSize="24" VerticalAlignment="Bottom"/>
 
+            <!-- Buttons to set different simple states-->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -53,52 +60,82 @@
                 </Grid.RowDefinitions>
 
                 <Button Grid.Row="0" Grid.Column="0" Name="Blank" Content="Blank" 
-                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+                    Style="{StaticResource style_Button}" Click="SimpleState_Action"/>
                 <Button Grid.Row="0" Grid.Column="1" Name="Idle" Content="Idle" 
-                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+                    Style="{StaticResource style_Button}" Click="SimpleState_Action"/>
                 <Button Grid.Row="1" Grid.Column="0" Name="InProgress" Content="in Progress" 
-                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+                    Style="{StaticResource style_Button}" Click="SimpleState_Action"/>
                 <Button Grid.Row="1" Grid.Column="1" Name="StateBad" Content="is Bad" 
-                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+                    Style="{StaticResource style_Button}" Click="SimpleState_Action"/>
                 <Button Grid.Row="2" Grid.Column="0" Name="Unstable" Content="is Unstable" 
-                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+                    Style="{StaticResource style_Button}" Click="SimpleState_Action"/>
                 <Button Grid.Row="2" Grid.Column="1" Name="Stable" Content="is Stable" 
-                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+                    Style="{StaticResource style_Button}" Click="SimpleState_Action"/>
             </Grid>
 
-            <Button Grid.Row="3" Name="testSauron" Content="Sauron Blame" 
-                    Style="{StaticResource style_Button}" Click="Button_Action"/>
+            <TextBlock Grid.Row="2" Text="Sauron ..." FontSize="24" VerticalAlignment="Bottom"/>
 
-            <Grid Grid.Row="4" HorizontalAlignment="Stretch" Margin="10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" FontSize="24" Text="Profile" />
-                <ComboBox Grid.Column="1" Name="SauronProfileSelect"  
+            <!-- Buttons to test different sauron profiles-->
+            <Grid Grid.Row="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Run Profile -->
+                <Grid Grid.Row="0" HorizontalAlignment="Stretch" Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox Grid.Column="0" Name="SauronProfileSelect"  
                           ItemsSource="{Binding DefinedProfiles}" DisplayMemberPath="Key" SelectedValuePath="Value"
-                          FontSize="20" HorizontalAlignment="Stretch" />
-                <Button Grid.Column="2" Name="RunProfile"  Content="Run" FontSize="24" Margin="5" Click="Button_Action"/>
+                          FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+                    <Button Grid.Column="1" Style="{StaticResource style_SmallButton}" 
+                            Name="RunProfile"  Content="Run Profile" FontSize="20" Click="SauronState_Action"/>
+                </Grid>
+
+                <!-- Test blaming mode in different directions-->
+                <Grid Grid.Row="1" HorizontalAlignment="Stretch" Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="18*"/>
+                        <ColumnDefinition Width="7*"/>
+                    </Grid.ColumnDefinitions>
+                    <Slider Grid.Column="0" Name="RelativeBlamePosition" HorizontalAlignment="Stretch" Margin="10,0" Maximum="100" LargeChange="10" SmallChange="5" Value="50"/>
+                    <Button Grid.Column="1" Style="{StaticResource style_SmallButton}" 
+                            Name="TestSauronBlame" Content="Blame" Click="SauronState_Action"/>
+                </Grid>
+
+                <!-- Set and get positions -->
+                <Grid Grid.Row="3" HorizontalAlignment="Stretch">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Content="&lt;" Style="{StaticResource style_SmallButton}" 
+                            Name="SetFixPointLeft" Click="SauronState_Action"/>
+                    <Button Grid.Column="1" Content="&gt;" Style="{StaticResource style_SmallButton}" 
+                            Name="SetFixPointRight" Click="SauronState_Action"/>
+
+                    <Button Grid.Column="2" Content="Get" Name="GetCurrentFixPoint" 
+                            Style="{StaticResource style_SmallButton}" Click="SauronState_Action"/>
+
+                    <TextBlock Grid.Column="3" Name="DirektionDisplay" Text="000" FontSize="24" 
+                               TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+
+                    <Button Grid.Column="4" Content="Set" Name="SetFixPointTo"                             
+                            Style="{StaticResource style_SmallButton}" Click="SauronState_Action"/>
+                </Grid>
+
             </Grid>
 
-            <!-- Grid Grid.Row="4" HorizontalAlignment="Center">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="-" FontSize="32" />
-                <TextBlock Grid.Column="1" Text="Test" FontSize="28" Width="150" TextAlignment="Center" HorizontalAlignment="Center"/>
-                <Button Grid.Column="2" Content="+" FontSize="32" />
-            </ -->
-            
-            
-                       
-            
-
-            <Button Grid.Row="6" Name="showProfiles" Content="show Profiles" 
-                    Style="{StaticResource style_Button}" FontWeight="Normal" Click="Button_Action"/>
+            <Button Grid.Row="5" Name="showProfiles" Content="show Profiles" 
+                    Style="{StaticResource style_Button}" FontWeight="Normal" Click="SimpleState_Action"/>
         </Grid>
     </Grid>
 </Page>

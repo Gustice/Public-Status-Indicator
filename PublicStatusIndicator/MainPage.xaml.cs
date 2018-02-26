@@ -149,7 +149,7 @@ namespace PublicStatusIndicator
             CenterColor = new SolidColorBrush(EngineDefines.StateColors[newState]);
 
             // Tell GUI that state is changed
-            (UC_ModePreview as Preview).ChangeState(newState);
+            (UC_ModePreview as Preview).SetState(newState);
 
             // Tell App that stet is changed
             SetNewStateByGui?.Invoke(newState);
@@ -165,37 +165,46 @@ namespace PublicStatusIndicator
         private void SauronState_Action(object sender, RoutedEventArgs e)
         {
             var cmdButton = (Button)sender;
-            EngineState newState = EngineState.Blank;
             switch (cmdButton.Name)
             {
                 case "RunProfile":
                     SetNewProfileByGui?.Invoke((List<ProfileElement>)SauronProfileSelect.SelectedValue);
+                    (UC_ModePreview as Preview).SetProfile((List<ProfileElement>)SauronProfileSelect.SelectedValue);
                     break;
 
                 case "TestSauronBlame":
                     float relativePosition = (float)(RelativeBlamePosition.Value / RelativeBlamePosition.Maximum);
                     SetBlamePosition?.Invoke(relativePosition);
+                    // Tell GUI new Profile
+                    (UC_ModePreview as Preview).SetBlameProfile(relativePosition);
                     break;
 
                 case "GetCurrentFixPoint":
                     float? ret = GetFixPointPosition?.Invoke();
+                    int pos;
                     if (ret != null)
                     {
-                        int pos = (int)(ret * 100) ;
-                        DirektionDisplay.Text = pos.ToString();
+                        pos = (int)(ret * 100) ;
+                        DirektionDisplayGUI.Text = pos.ToString();
                     }
+
+                    float ret2 = (UC_ModePreview as Preview).Preview_GetFixPointPosition();
+                    pos = (int)(ret2 * 100);
+                    DirektionDisplayLED.Text = pos.ToString();
                     break;
 
                 case "SetFixPointTo":
-
+                    SetFixPointTo.Visibility = Visibility.Collapsed;
                     break;
 
                 case "SetFixPointLeft":
                     OnIncrement?.Invoke(0, 1);
+                    (UC_ModePreview as Preview).SetEyePosition(0, 1);
                     break;
 
                 case "SetFixPointRight":
                     OnIncrement?.Invoke(0, -1);
+                    (UC_ModePreview as Preview).SetEyePosition(0, -1);
                     break;
 
                 default:
@@ -206,8 +215,12 @@ namespace PublicStatusIndicator
             CenterColor = new SolidColorBrush(EngineDefines.StateColors[EngineState.Sauron]);
 
             // Tell GUI that state is changed
-            (UC_ModePreview as Preview).ChangeState(newState);
+            (UC_ModePreview as Preview).SetState(EngineState.Sauron);
         }
+
+
+
+
 
         /// <summary>
         /// Display contend

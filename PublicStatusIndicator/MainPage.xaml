@@ -114,6 +114,7 @@
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
@@ -125,10 +126,18 @@
                     <Button Grid.Column="2" Content="Get" Name="GetCurrentFixPoint" 
                             Style="{StaticResource style_SmallButton}" Click="SauronState_Action"/>
 
-                    <TextBlock Grid.Column="3" Name="DirektionDisplay" Text="000" FontSize="24" 
-                               TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                    <StackPanel Grid.Column="3" Orientation="Vertical" Margin="10,0">
+                        <TextBlock Text="GUI" FontSize="20"/>
+                        <TextBlock Text="LED" FontSize="20"/>
+                    </StackPanel>
 
-                    <Button Grid.Column="4" Content="Set" Name="SetFixPointTo"                             
+                    <StackPanel Grid.Column="4" Orientation="Vertical">
+                        <TextBlock Name="DirektionDisplayGUI" Text="000" FontSize="20" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                        <TextBlock Name="DirektionDisplayLED" Text="000" FontSize="20" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+
+
+                    <Button Grid.Column="5" Content="Set" Name="SetFixPointTo"                             
                             Style="{StaticResource style_SmallButton}" Click="SauronState_Action"/>
                 </Grid>
 

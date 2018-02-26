@@ -308,7 +308,7 @@ namespace PublicStatusIndicator.IndicatorEngine
                 hBurn = (byte)_fireI.Next(4);
 
                 TempOut[i].R = (byte)(burn + eye + blaze);
-                TempOut[i].G = (byte)(burn * hBurn / 8 + eye * _FireIntensity / MAX_FIRE_INTENS + blaze);
+                TempOut[i].G = (byte)(burn * hBurn / 8 + eye * _FireIntensity / MAX_FIRE_INTENS + blaze/4);
                 TempOut[i].B = (byte)(eye * _FireIntensity / MAX_FIRE_INTENS / 3);
 
                 relIdx += _reductionFactor;

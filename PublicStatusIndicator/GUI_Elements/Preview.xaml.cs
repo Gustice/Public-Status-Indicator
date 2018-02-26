@@ -60,16 +60,68 @@ namespace PublicStatusIndicator.GUI_Elements
 
         public void RefreshPage()
         {
+            _virtualRing = _virtualIndicator.EffectAccordingToProfile();
+
             _virtualRing = _virtualIndicator.EffectAccordingToState();
             _displayRing.SetAllVaules(_virtualRing);
         }
 
-        public void ChangeState(EngineState newState)
+        public void SetState(EngineState nextState)
         {
-            _virtualIndicator.State = newState;
-            StatusOutput = EngineDefines.StateOutputs[newState];
-            CenterColor = new SolidColorBrush(EngineDefines.StateColors[newState]);
+            _virtualIndicator.State = nextState;
+            if (nextState == EngineState.Sauron)
+            {
+                if (_virtualIndicator.Profile == null)
+                {
+                    _virtualIndicator.Profile = EngineDefines.SummonSauron;
+                }
+            }
+            else
+            {
+                _virtualIndicator.Profile = null;
+            }
+
+            StatusOutput = EngineDefines.StateOutputs[nextState];
+            CenterColor = new SolidColorBrush(EngineDefines.StateColors[nextState]);
         }
+
+        public void SetProfile(List<ProfileElement> profile)
+        {
+            _virtualIndicator.Profile = profile;
+        }
+
+        public void SetEyePosition(int num, int rel)
+        {
+            _virtualIndicator.DeviateSauronsFixPoint(rel);
+        }
+
+        public float Preview_GetFixPointPosition()
+        {
+            int pos;
+            int len;
+            _virtualIndicator.GetSauronsFixPointToLength(out pos, out len);
+
+            return (float)pos / len;
+        }
+
+        public void SetBlameProfile(float newPos)
+        {
+            int pos;
+            int len;
+            _virtualIndicator.GetSauronsFixPointToLength(out pos, out len);
+
+            // Determine Blame position from relativ position
+            int BalemPos = (int)(newPos * len);
+
+            // Start allways about 140° away from demanded blame position (for sake of effect)
+            int PosAtStart = BalemPos - (int)((float)len * 0.4);
+
+            // First look nervously around demanded blame position (for sake of effect)
+            int NevDelta = (int)((float)len * 0.05);
+
+            _virtualIndicator.Profile = EngineDefines.PrepareSauronBlameScript(PosAtStart, NevDelta, BalemPos);
+        }
+
 
         #region PropChanged
         public event PropertyChangedEventHandler PropertyChanged;

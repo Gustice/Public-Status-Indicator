@@ -8,20 +8,29 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
+using PublicStatusIndicator.Controller;
 
 namespace PublicStatusIndicator.Webserver
 {
     public sealed class HttpServer : IDisposable
     {
-        private const uint BufferSize = 8192;
+        private const uint BUFFER_SIZE = 8192;
         private readonly StreamSocketListener _listener;
         private HttpResponseMessage _response;
+        private RouteManager _routemanager;
 
-        public HttpServer(int serverPort)
+        public HttpServer(int serverPort = 80)
         {
             _listener = new StreamSocketListener();
+            _routemanager = new RouteManager();
             _listener.BindServiceNameAsync(serverPort.ToString());
             _listener.ConnectionReceived += (s, e) => ProcessRequestAsync(e.Socket);
+        }
+
+        internal void RegisterController(ApiController controller)
+        {
+            _routemanager.Register(controller);
+            _routemanager.InitRoutes();
         }
 
         public void Dispose()
@@ -36,19 +45,19 @@ namespace PublicStatusIndicator.Webserver
                 var request = new StringBuilder();
                 using (var input = socket.InputStream)
                 {
-                    var data = new byte[BufferSize];
+                    var data = new byte[BUFFER_SIZE];
                     var buffer = data.AsBuffer();
-                    var dataRead = BufferSize;
-                    while (dataRead == BufferSize)
+                    var dataRead = BUFFER_SIZE;
+                    while (dataRead == BUFFER_SIZE)
                     {
-                        await input.ReadAsync(buffer, BufferSize, InputStreamOptions.Partial);
+                        await input.ReadAsync(buffer, BUFFER_SIZE, InputStreamOptions.Partial);
                         request.Append(Encoding.UTF8.GetString(data, 0, data.Length));
                         dataRead = buffer.Length;
                     }
                 }
                 
                 _response = new HttpResponseMessage(HttpStatusCode.Found);
-                _response = await RouteManager.CurrentRouteManager.InvokeMethod(request.ToString());
+                _response = await _routemanager.InvokeMethod(request.ToString());
 
                 using (var output = socket.OutputStream)
                 {
@@ -89,8 +98,15 @@ namespace PublicStatusIndicator.Webserver
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Fehler in WriteResponseAsync: " + ex.Message);
+                Debug.WriteLine($"error in {nameof(WriteResponseAsync)}: " + ex.Message);
             }
+        }
+
+
+        internal void AddRouteManager(RouteManager manager)
+        {
+            _routemanager = manager;
+
         }
     }
 }

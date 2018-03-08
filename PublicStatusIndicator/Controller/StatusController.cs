@@ -6,16 +6,16 @@ using Windows.UI.Core;
 using PublicStatusIndicator.IndicatorEngine;
 using PublicStatusIndicator.Webserver;
 
-namespace PublicStatusIndicator.ApiController
+namespace PublicStatusIndicator.Controller
 {
     [Authentication]
     internal class StatusController : ApiController
     {
-        App ParentApp;
+        readonly App _parentApp;
 
         public StatusController(App parent)
         {
-            ParentApp = parent;
+            _parentApp = parent;
         }
 
         public event SetNewState SetNewStateByHost;
@@ -30,7 +30,7 @@ namespace PublicStatusIndicator.ApiController
             SetNewStateByHost?.Invoke(EngineState.Blank);
 
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-                    () => { ParentApp.RefreshTimer.Start(); }
+                    () => { _parentApp.RefreshTimer.Start(); }
                 );
             return await Ok("Off :)");
         }
@@ -40,7 +40,7 @@ namespace PublicStatusIndicator.ApiController
         {
             SetNewStateByHost?.Invoke(EngineState.Idle);
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        () => { ParentApp.RefreshTimer.Start(); }
+        () => { _parentApp.RefreshTimer.Start(); }
         );
 
             return await Ok(EngineDefines.StateOutputs[EngineState.Idle]);
@@ -52,7 +52,7 @@ namespace PublicStatusIndicator.ApiController
         {
             SetNewStateByHost?.Invoke(EngineState.Progress);
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        () => { ParentApp.RefreshTimer.Start(); }
+        () => { _parentApp.RefreshTimer.Start(); }
         );
 
             return await Ok(EngineDefines.StateOutputs[EngineState.Progress]);
@@ -64,7 +64,7 @@ namespace PublicStatusIndicator.ApiController
         {
             SetNewStateByHost?.Invoke(EngineState.Bad);
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        () => { ParentApp.RefreshTimer.Start(); }
+        () => { _parentApp.RefreshTimer.Start(); }
         );
 
             return await Ok(EngineDefines.StateOutputs[EngineState.Bad]);
@@ -76,7 +76,7 @@ namespace PublicStatusIndicator.ApiController
         {
             SetNewStateByHost?.Invoke(EngineState.Unstable);
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        () => { ParentApp.RefreshTimer.Start(); }
+        () => { _parentApp.RefreshTimer.Start(); }
         );
 
             return await Ok(EngineDefines.StateOutputs[EngineState.Unstable]);
@@ -88,7 +88,7 @@ namespace PublicStatusIndicator.ApiController
         {
             SetNewStateByHost?.Invoke(EngineState.Stable);
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-        () => { ParentApp.RefreshTimer.Start(); }
+        () => { _parentApp.RefreshTimer.Start(); }
         );
             return await Ok(EngineDefines.StateOutputs[EngineState.Stable]);
         }

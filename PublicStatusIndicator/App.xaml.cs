@@ -1,25 +1,16 @@
 ﻿using PublicStatusIndicator.IndicatorEngine;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.System.Threading;
+using PublicStatusIndicator.Controller;
 
 // To use the Web-Server
 using PublicStatusIndicator.Webserver;
-using PublicStatusIndicator.ApiController;
 
 // Open Tasks
 // - Settings have to be made avilable on construction event to set up all objects dinamically to particular needs
@@ -52,57 +43,69 @@ namespace PublicStatusIndicator
         const int DECODER_SWPIN = 4;
         #endregion
 
-        Frame rootFrame = Window.Current.Content as Frame;
-        LED_Strip _ledStrip;
-        IncrementalEncoder DirPreset;
+        private Frame _rootFrame = Window.Current.Content as Frame;
+        readonly LED_Strip _ledStrip;
 
-        public EngineState _state { get; set; }
+        private EngineState _state { get; set; }
         public DispatcherTimer RefreshTimer { get; set; }
         
         public App()
         {
-            this.InitializeComponent();
-            this.Suspending += OnSuspending;
+            InitializeComponent();
+            Suspending += OnSuspending;
 
             _ledStrip = new LED_Strip(LEDSTRIP_LEN, LED_ROTATE_SMOOTHNESS, LED_PULSE_VALUES);
             _state = EngineState.Blank;
 
             InitWebserver();
 
-            DirPreset = new IncrementalEncoder(LEDSTRIP_LEN, DECODER_SAMPLE_TIME, 
+            var dirPreset = new IncrementalEncoder(LEDSTRIP_LEN, DECODER_SAMPLE_TIME, 
                 new IncrementalEncoder.PinConfig(DECODER_APIN, DECODER_BPIN, DECODER_SWPIN));
-            DirPreset.OnIncrement += DirPreset_OnEncoderStepCB;
-            DirPreset.OnSwitchPressed += DirPreset_OnSwitchPressedCB;
+            dirPreset.OnIncrement += DirPreset_OnEncoderStepCB;
+            dirPreset.OnSwitchPressed += DirPreset_OnSwitchPressedCB;
 
             RefreshTimer = new DispatcherTimer();
             RefreshTimer.Interval = TimeSpan.FromMilliseconds(MS_TICK);
             RefreshTimer.Tick += LED_Refresh_Tick;
             RefreshTimer.Start();
 
-            DirPreset.StartSampling();
+            dirPreset.StartSampling();
         }
             
         int _showOffStep = 0;
         private void DirPreset_OnSwitchPressedCB() // @todo hier ausbessern
         {
-            if (_ledStrip.State == EngineState.Blank)
+            switch (_ledStrip.State)
             {
-                _ledStrip.SetState(EngineState.Sauron);
-            }
-            else if (_ledStrip.State == EngineState.Sauron)
-            {
-                switch (_showOffStep)
-                {
-                    case 0:
-                        _showOffStep++;
-                        //@todo hier den Mad-Aufruf bringen.
-                        break;
+                case EngineState.Blank:
+                    _ledStrip.SetState(EngineState.Sauron);
+                    break;
+                case EngineState.Sauron:
+                    switch (_showOffStep)
+                    {
+                        case 0:
+                            _showOffStep++;
+                            //@todo hier den Mad-Aufruf bringen.
+                            break;
 
-                    default:
-                        _showOffStep = 0;
-                        _ledStrip.SetState(EngineState.Blank);
-                        break;
-                }
+                        default:
+                            _showOffStep = 0;
+                            _ledStrip.SetState(EngineState.Blank);
+                            break;
+                    }
+                    break;
+                case EngineState.Idle:
+                    break;
+                case EngineState.Progress:
+                    break;
+                case EngineState.Bad:
+                    break;
+                case EngineState.Unstable:
+                    break;
+                case EngineState.Stable:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -118,16 +121,16 @@ namespace PublicStatusIndicator
         private void InitWebserver()
         {
             StatusController webStatusCtrl = new StatusController(this);
-            webStatusCtrl.SetNewStateByHost += new SetNewState(ChangeState_CB);
-            webStatusCtrl.SetNewProfileByGui += new SetNewProfile(ChangeProfile_CB);
-            webStatusCtrl.SetBlamePosition += new SetPropotionalValue(SetBlamePosition_CB);
-            webStatusCtrl.GetFixPointPosition += new GetProportianalValue(ReturnCurrentFixPointPosition);
+            webStatusCtrl.SetNewStateByHost += ChangeState_CB;
+            webStatusCtrl.SetNewProfileByGui += ChangeProfile_CB;
+            webStatusCtrl.SetBlamePosition += SetBlamePosition_CB;
+            webStatusCtrl.GetFixPointPosition += ReturnCurrentFixPointPosition;
 
-        RouteManager.CurrentRouteManager.Controllers.Add(webStatusCtrl);
-            RouteManager.CurrentRouteManager.InitRoutes();
             var asyncAction = ThreadPool.RunAsync(workItem =>
             {
-                var server = new HttpServer(80);
+                var server = new HttpServer();
+                server.RegisterController(webStatusCtrl);
+                
             });
         }
 
@@ -142,9 +145,9 @@ namespace PublicStatusIndicator
             _ledStrip.SetProfile(toProfile);
         }
 
-        public void SetBlamePosition_CB(float BlamePos)
+        public void SetBlamePosition_CB(float blamePos)
         {
-            _ledStrip.SetBlameProfile(BlamePos);
+            _ledStrip.SetBlameProfile(blamePos);
         }
 
         public float ReturnCurrentFixPointPosition()
@@ -157,10 +160,10 @@ namespace PublicStatusIndicator
         {
             _ledStrip.RefreshEvent();
 
-            if (rootFrame.Content is MainPage)
+            if (_rootFrame.Content is MainPage)
             {
                 // Event an die GUI verdrahten.
-                (rootFrame.Content as MainPage).RefreshEvent();
+                (_rootFrame.Content as MainPage).RefreshEvent();
             }
         }
 
@@ -175,18 +178,18 @@ namespace PublicStatusIndicator
 #if DEBUG
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                this.DebugSettings.EnableFrameRateCounter = true;
+                DebugSettings.EnableFrameRateCounter = true;
             }
 #endif
             
             // Do not repeat app initialization when the Window already has content,
             // just ensure that the window is active
-            if (rootFrame == null)
+            if (_rootFrame == null)
             {
                 // Create a Frame to act as the navigation context and navigate to the first page
-                rootFrame = new Frame();
+                _rootFrame = new Frame();
 
-                rootFrame.NavigationFailed += OnNavigationFailed;
+                _rootFrame.NavigationFailed += OnNavigationFailed;
 
                 if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
                 {
@@ -194,29 +197,29 @@ namespace PublicStatusIndicator
                 }
 
                 // Place the frame in the current Window
-                Window.Current.Content = rootFrame;
+                Window.Current.Content = _rootFrame;
             }
 
             if (e.PrelaunchActivated == false)
             {
-                if (rootFrame.Content == null)
+                if (_rootFrame.Content == null)
                 {
                     // When the navigation stack isn't restored navigate to the first page,
                     // configuring the new page by passing required information as a navigation
                     // parameter
-                    rootFrame.Navigate(typeof(MainPage), e.Arguments);
+                    _rootFrame.Navigate(typeof(MainPage), e.Arguments);
 
-                    if (rootFrame.Content is MainPage)
+                    if (_rootFrame.Content is MainPage)
                     {
                         // Event an die GUI verdrahten.
-                        (rootFrame.Content as MainPage).SetNewStateByGui += new SetNewState(ChangeState_CB);
-                        (rootFrame.Content as MainPage).SetNewProfileByGui += new SetNewProfile(ChangeProfile_CB);
-                        (rootFrame.Content as MainPage).SetBlamePosition += new SetPropotionalValue(SetBlamePosition_CB);
-                        (rootFrame.Content as MainPage).GetFixPointPosition += new GetProportianalValue(ReturnCurrentFixPointPosition);
-                        (rootFrame.Content as MainPage).OnIncrement += DirPreset_OnEncoderStepCB;
+                        (_rootFrame.Content as MainPage).SetNewStateByGui += ChangeState_CB;
+                        (_rootFrame.Content as MainPage).SetNewProfileByGui += ChangeProfile_CB;
+                        (_rootFrame.Content as MainPage).SetBlamePosition += SetBlamePosition_CB;
+                        (_rootFrame.Content as MainPage).GetFixPointPosition += ReturnCurrentFixPointPosition;
+                        (_rootFrame.Content as MainPage).OnIncrement += DirPreset_OnEncoderStepCB;
 
 
-                        (rootFrame.Content as MainPage).ParentApp = this;
+                        (_rootFrame.Content as MainPage).ParentApp = this;
                     }
                 }
                 // Ensure the current window is active

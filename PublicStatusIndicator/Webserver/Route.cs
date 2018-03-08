@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Reflection;
+using PublicStatusIndicator.Controller;
 
 namespace PublicStatusIndicator.Webserver
 {
-    internal class Route : Attribute
+    public class Route : Attribute
     {
         public Route(string route)
         {
@@ -23,7 +24,7 @@ namespace PublicStatusIndicator.Webserver
         /// <summary>
         ///     Controller which contains Route
         /// </summary>
-        public ApiController.ApiController Controller { get; internal set; }
+        public ApiController Controller { get; internal set; }
 
         /// <summary>
         ///     Parameters for Route

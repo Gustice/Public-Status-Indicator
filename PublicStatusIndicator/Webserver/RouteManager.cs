@@ -3,34 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using PublicStatusIndicator.Controller;
 
 namespace PublicStatusIndicator.Webserver
 {
-    internal class RouteManager
-    {
-        private static RouteManager _instance;
-        public List<ApiController.ApiController> Controllers;
+    
 
-        public List<Route> Routes;
+    public class RouteManager
+    {
+        private readonly List<ApiController> _controllers;
+        private readonly List<Route> _routes;
 
         public RouteManager()
         {
-            Routes = new List<Route>();
-            Controllers = new List<ApiController.ApiController>();
-        }
-
-        public static RouteManager CurrentRouteManager
-        {
-            get
-            {
-                if (_instance == null)
-                    _instance = new RouteManager();
-                return _instance;
-            }
+            _routes = new List<Route>();
+            _controllers = new List<ApiController>();
         }
 
         /// <summary>
@@ -93,88 +82,54 @@ namespace PublicStatusIndicator.Webserver
 
             foreach (Match myMatch in myRegex.Matches(reqstring))
             {
-                if (myMatch.Success)
-                {
-                    var targetRoute = Routes.FirstOrDefault( route => string.Equals(route.Url, myMatch.Value.Trim(), StringComparison.CurrentCultureIgnoreCase));
-                    return targetRoute;
-                }
-                
+                if (!myMatch.Success) continue;
+                var targetRoute = _routes.FirstOrDefault( route => string.Equals(route.Url, myMatch.Value.Trim(), StringComparison.CurrentCultureIgnoreCase));
+                return targetRoute;
             }
             return null;
         }
 
         /// <summary>
-        ///     Initialises all Routes for the Controllers
+        ///     Initialises all routes for the registered controllers
         /// </summary>
         internal void InitRoutes()
         {
-            foreach (var apiController in Controllers)
-            {
-                var controllerType = apiController.GetType();
-                var methodsWithRoutes = controllerType.GetMethods().Where(
-                    m => m.GetCustomAttributes(typeof(Route)).Any()).ToArray();
+            _routes.Clear();
 
-                var controllerAuth = controllerType.GetTypeInfo().GetCustomAttribute(typeof(Authentication));
+            foreach (var apiController in _controllers)
+            {
+                var methodsWithRoutes = apiController.GetInvokeableMethods();
+                var controllerNeedsAuth = apiController.NeedsAuth();
                 
                 foreach (var memberInfo in methodsWithRoutes)
                 {
-                    var route = memberInfo.GetCustomAttributes(typeof(Route)).FirstOrDefault() as Route;
+                    var route = memberInfo.GetRoute();
                     if (route == null) continue;
 
-                    var routeAuth = memberInfo.GetCustomAttribute(typeof(Authentication));
+                    var routeNeedsAuth = memberInfo.NeedsAuth();
 
                     route.Method = memberInfo;
                     route.Controller = apiController;
-                    if (controllerAuth != null || routeAuth != null)
+
+                    if (controllerNeedsAuth || routeNeedsAuth)
                     {
                         route.AuthenticationRequired = true;
                     }
                     route.Params = memberInfo.GetParameters();
-                    Routes.Add(route);
+                    _routes.Add(route);
                 }
             }
         }
 
-        public string GetAuthAttribute<T>()
-        {
-            //var dnAttribute = typeof(T).GetCustomAttributes(
-            //    typeof(DomainNameAttribute), true
-            //).FirstOrDefault() as DomainNameAttribute;
-            //if (dnAttribute != null)
-            //{
-            //    return dnAttribute.Name;
-            //}
-            return null;
-        }
+        
 
-    }
-
-    internal class RequestParser
-    {
         /// <summary>
-        /// Tries to get the (Basic) Authorisation Credentials out of the Request string
+        /// registers a <see cref="ApiController"/> with the <see cref="RouteManager"/>
         /// </summary>
-        /// <param name="requestString"></param>
-        /// <returns></returns>
-        public static NetworkCredential GetCredentials(string requestString)
+        /// <param name="controller">instance of <see cref="ApiController"/>to register</param>
+        public void Register(ApiController controller)
         {
-            var authRegex = new Regex(@"\b(Basic).[^\s]+");
-            var user = authRegex.Match(requestString);
-            var encodedUsernamePassword = user.Value.Substring("Basic ".Length).Trim();
-            var encoding = Encoding.GetEncoding("iso-8859-1");
-            var usernamePassword = encoding.GetString(Convert.FromBase64String(encodedUsernamePassword));
-            if (string.IsNullOrEmpty(usernamePassword))
-                throw new Exception("Auth Error");
-
-            if (!usernamePassword.Contains(":"))
-                throw new Exception("Auth Error");
-
-            return new NetworkCredential()
-            {
-                UserName = usernamePassword.Split(':')[0],
-                Password= usernamePassword.Split(':')[1]
-            };
-
+            _controllers.Add(controller);   
         }
     }
 }

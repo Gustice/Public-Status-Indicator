@@ -1,21 +1,24 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
+using PublicStatusIndicator.Webserver;
 
-namespace PublicStatusIndicator.ApiController
+namespace PublicStatusIndicator.Controller
 {
-    internal class ApiController
+    public class ApiController
     {
         /// <summary>
-        ///     ApiMeldung OK mit entsprechend Formatiertem Json Object
+        ///     responds with a <see cref="HttpStatusCode.OK"/> Mesasge
         /// </summary>
-        /// <param name="response">Das Objekt das ausgegeben werden soll</param>
-        /// <returns>HttpResponse OK mit Json Daten</returns>
-        public async Task<HttpResponseMessage> Ok(object response)
+        /// <param name="response">object to transfer with the response message</param>
+        /// <returns><see cref="HttpResponseMessage"/> with <see cref="HttpStatusCode.OK"/></returns>
+        protected async Task<HttpResponseMessage> Ok(object response)
         {
             var responseMessgae = await Task.Factory.StartNew(async () =>
             {
@@ -56,7 +59,7 @@ namespace PublicStatusIndicator.ApiController
         }
 
 
-        public async Task<HttpResponseMessage> InternalServerError(Exception exception)
+        private async Task<HttpResponseMessage> InternalServerError(Exception exception)
         {
             var response = await Task.Factory.StartNew(() =>
             {
@@ -68,4 +71,21 @@ namespace PublicStatusIndicator.ApiController
         }
 
     }
+
+    public static class ApiControllerExtensions
+    {
+        public static MethodInfo[] GetInvokeableMethods(this ApiController controller)
+        {
+            var controllerType = controller.GetType();
+            var methodsWithRoutes = controllerType.GetMethods().Where(
+                m => m.GetCustomAttributes(typeof(Route)).Any()).ToArray();
+            return methodsWithRoutes;
+        }
+
+        public static bool NeedsAuth(this ApiController controller)
+        {
+            return controller.GetType().GetTypeInfo().GetCustomAttribute(typeof(Authentication)) != null;
+        }
+    }
+
 }

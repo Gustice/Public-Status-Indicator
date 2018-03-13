@@ -175,9 +175,9 @@ namespace PublicStatusIndicator
                     _Switch.SetDriveMode(GpioPinDriveMode.Input);
                 }
             }
-            catch (System.Exception)
+            catch (Exception)
             {
-                throw new System.Exception("There appearts to be a GPIO-Port missing or is already used");
+                throw new Exception("There appearts to be a GPIO-Port missing or is already used");
             }
         }
 
